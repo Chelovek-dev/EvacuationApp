@@ -7,17 +7,24 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.evacuationapp.R;
+import com.example.evacuationapp.utils.PreferenceManager;
 
 public class ClientMainActivity extends AppCompatActivity {
 
     private TextView tvWelcome;
     private Button btnCreateOrder, btnHistory, btnLogout;
-    private String clientId;
+    private long userId; // теперь long
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_client_main);
+
+        // Получаем userId из Intent (если передали) или из SharedPreferences
+        userId = getIntent().getLongExtra("userId", 0);
+        if (userId == 0) {
+            userId = new PreferenceManager(this).getUserId();
+        }
 
         tvWelcome = findViewById(R.id.tvWelcome);
         btnCreateOrder = findViewById(R.id.btnCreateOrder);
@@ -25,17 +32,17 @@ public class ClientMainActivity extends AppCompatActivity {
         btnLogout = findViewById(R.id.btnLogout);
 
         String phone = getIntent().getStringExtra("phone");
-        clientId = "client_" + (phone != null ? phone : "123");
-
         if (phone != null) {
             tvWelcome.setText("Добро пожаловать, " + phone);
+        } else {
+            tvWelcome.setText("Добро пожаловать, клиент!");
         }
 
         btnCreateOrder.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(ClientMainActivity.this, CreateOrderActivity.class);
-                intent.putExtra("clientId", clientId);
+                intent.putExtra("clientId", userId); // передаём long
                 startActivity(intent);
             }
         });
@@ -51,6 +58,8 @@ public class ClientMainActivity extends AppCompatActivity {
         btnLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Очищаем данные и возвращаемся на экран входа
+                new PreferenceManager(ClientMainActivity.this).clear();
                 finish();
             }
         });

@@ -2,6 +2,7 @@ package com.example.evacuationapp.client;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -9,105 +10,114 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.evacuationapp.R;
 import com.example.evacuationapp.models.Order;
+import com.example.evacuationapp.network.RetrofitClient;
+import com.example.evacuationapp.utils.PreferenceManager;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class TrackOrderActivity extends AppCompatActivity {
 
     private TextView tvOrderId, tvStatus, tvPickup, tvDropoff, tvPrice;
-    private Button btnCancel, btnBack;
-    private Order order;
-    private Handler handler = new Handler();
-    private Runnable updateRunnable;
+    private Button btnCancelOrder, btnBack;
+    private long orderId;
+    private long clientId;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable statusUpdater;
+    private Order currentOrder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_track_order);
 
-        order = (Order) getIntent().getSerializableExtra("order");
+        // Получаем ID заказа из Intent
+        orderId = getIntent().getLongExtra("orderId", 0);
+        if (orderId == 0) {
+            // Если вдруг передали объект Order (для обратной совместимости)
+            Order tempOrder = (Order) getIntent().getSerializableExtra("order");
+            if (tempOrder != null) {
+                orderId = tempOrder.getOrderId();
+            }
+        }
+        clientId = new PreferenceManager(this).getUserId();
 
         tvOrderId = findViewById(R.id.tvOrderId);
         tvStatus = findViewById(R.id.tvStatus);
         tvPickup = findViewById(R.id.tvPickupAddress);
         tvDropoff = findViewById(R.id.tvDropoffAddress);
         tvPrice = findViewById(R.id.tvPrice);
-        btnCancel = findViewById(R.id.btnCancelOrder);
+        btnCancelOrder = findViewById(R.id.btnCancelOrder);
         btnBack = findViewById(R.id.btnBack);
 
-        if (order != null) {
-            tvOrderId.setText("Заказ №" + order.getOrderId().substring(0, 8));
-            tvPickup.setText("Откуда: " + order.getPickupAddress());
-            tvDropoff.setText("Куда: " + order.getDropoffAddress());
-            tvPrice.setText("Стоимость: " + (int)order.getPrice() + " ₽");
-        }
+        btnCancelOrder.setOnClickListener(v -> cancelOrder());
+        btnBack.setOnClickListener(v -> finish());
 
-        // Имитация обновления статуса
-        startStatusSimulation();
+        // Первая загрузка
+        loadOrder();
 
-        btnCancel.setOnClickListener(new View.OnClickListener() {
+        // Запускаем периодическое обновление (каждые 5 секунд)
+        startPolling();
+    }
+
+    private void loadOrder() {
+        Call<Order> call = RetrofitClient.getApiService().getOrder(orderId);
+        call.enqueue(new Callback<Order>() {
             @Override
-            public void onClick(View v) {
-                if (order != null && !"completed".equals(order.getStatus())) {
-                    order.setStatus("cancelled");
-                    tvStatus.setText("Статус: Отменен");
-                    Toast.makeText(TrackOrderActivity.this, "Заказ отменен", Toast.LENGTH_SHORT).show();
-                    btnCancel.setEnabled(false);
+            public void onResponse(Call<Order> call, Response<Order> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    currentOrder = response.body();
+                    updateUI();
+                } else {
+                    Toast.makeText(TrackOrderActivity.this, "Не удалось загрузить заказ", Toast.LENGTH_SHORT).show();
                 }
             }
-        });
 
-        btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                finish();
+            public void onFailure(Call<Order> call, Throwable t) {
+                Toast.makeText(TrackOrderActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void startStatusSimulation() {
-        updateRunnable = new Runnable() {
-            int step = 0;
+    private void updateUI() {
+        if (currentOrder == null) return;
+        tvOrderId.setText("Заказ №" + currentOrder.getOrderId());
+        tvPickup.setText("Откуда: " + currentOrder.getPickupAddress());
+        tvDropoff.setText("Куда: " + currentOrder.getDropoffAddress());
+        tvPrice.setText("Стоимость: " + (int) currentOrder.getPrice() + " ₽");
+        tvStatus.setText("Статус: " + currentOrder.getStatusText());
+
+        // Если заказ завершён или отменён, блокируем кнопку отмены
+        if ("completed".equals(currentOrder.getStatus()) || "cancelled".equals(currentOrder.getStatus())) {
+            btnCancelOrder.setEnabled(false);
+        } else {
+            btnCancelOrder.setEnabled(true);
+        }
+    }
+
+    private void startPolling() {
+        statusUpdater = new Runnable() {
             @Override
             public void run() {
-                if (order == null) return;
-
-                switch (step) {
-                    case 0:
-                        tvStatus.setText("Статус: " + order.getStatusText());
-                        step++;
-                        handler.postDelayed(this, 3000);
-                        break;
-                    case 1:
-                        order.setStatus("accepted");
-                        tvStatus.setText("Статус: " + order.getStatusText());
-                        tvStatus.append("\nВодитель: Иван (номер: 123)");
-                        step++;
-                        handler.postDelayed(this, 4000);
-                        break;
-                    case 2:
-                        order.setStatus("in_progress");
-                        tvStatus.setText("Статус: " + order.getStatusText());
-                        tvStatus.append("\nВодитель едет к вам");
-                        step++;
-                        handler.postDelayed(this, 5000);
-                        break;
-                    case 3:
-                        order.setStatus("completed");
-                        tvStatus.setText("Статус: " + order.getStatusText());
-                        btnCancel.setEnabled(false);
-                        Toast.makeText(TrackOrderActivity.this, "Заказ завершен", Toast.LENGTH_SHORT).show();
-                        break;
-                }
+                loadOrder(); // повторно загружаем заказ
+                handler.postDelayed(this, 5000); // каждые 5 секунд
             }
         };
+        handler.post(statusUpdater);
+    }
 
-        handler.post(updateRunnable);
+    private void cancelOrder() {
+        if (currentOrder == null) return;
+        // Для отмены можно отправить PUT /api/orders/{orderId}/status со статусом "cancelled"
+        // (если сервер поддерживает). Пока просто локально.
+        Toast.makeText(this, "Отмена заказа пока не реализована на сервере", Toast.LENGTH_SHORT).show();
+        // TODO: вызвать API отмены
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (handler != null && updateRunnable != null) {
-            handler.removeCallbacks(updateRunnable);
-        }
+        handler.removeCallbacks(statusUpdater);
     }
 }

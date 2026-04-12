@@ -9,21 +9,25 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.evacuationapp.R;
 import com.example.evacuationapp.models.Order;
-import java.util.UUID;
+import com.example.evacuationapp.network.RetrofitClient;
+import com.example.evacuationapp.utils.PreferenceManager;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class CreateOrderActivity extends AppCompatActivity {
 
     private EditText etPickup, etDropoff;
     private Button btnCreate, btnCancel;
-    private String clientId;
+    private long clientId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_order);
 
-        clientId = getIntent().getStringExtra("clientId");
-        if (clientId == null) clientId = "client_123"; // Для теста
+        // Получаем clientId из SharedPreferences (сохранили при логине)
+        clientId = new PreferenceManager(this).getUserId();
 
         etPickup = findViewById(R.id.etPickupAddress);
         etDropoff = findViewById(R.id.etDropoffAddress);
@@ -54,18 +58,34 @@ public class CreateOrderActivity extends AppCompatActivity {
             return;
         }
 
-        // Создаем заказ
+        // Создаём объект Order для отправки (без ID, сервер сам назначит)
         Order order = new Order();
-        order.setOrderId(UUID.randomUUID().toString());
         order.setClientId(clientId);
         order.setPickupAddress(pickup);
         order.setDropoffAddress(dropoff);
-        order.setStatus("waiting");
+        order.setStatus("waiting"); // будет перезаписано сервером
+        order.setPrice(1000.0);
 
-        // Передаем заказ в TrackOrderActivity
-        Intent intent = new Intent(CreateOrderActivity.this, TrackOrderActivity.class);
-        intent.putExtra("order", order);
-        startActivity(intent);
-        finish();
+        // Вызываем API
+        Call<Order> call = RetrofitClient.getApiService().createOrder(order);
+        call.enqueue(new Callback<Order>() {
+            @Override
+            public void onResponse(Call<Order> call, Response<Order> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Order createdOrder = response.body();
+                    Intent intent = new Intent(CreateOrderActivity.this, TrackOrderActivity.class);
+                    intent.putExtra("orderId", createdOrder.getOrderId());
+                    startActivity(intent);
+                    finish();
+                } else {
+                    Toast.makeText(CreateOrderActivity.this, "Ошибка создания заказа", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Order> call, Throwable t) {
+                Toast.makeText(CreateOrderActivity.this, "Нет связи с сервером", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

@@ -8,7 +8,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.evacuationapp.R;
 
 public class LoginActivity extends AppCompatActivity {
@@ -23,7 +22,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         etPhone = findViewById(R.id.etPhone);
-        btnLogin = findViewById(R.id.btnLogin);
+        btnLogin = findViewById(R.id.btnLogin);   // ← используем id из XML
         tvError = findViewById(R.id.tvError);
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
@@ -33,6 +32,11 @@ public class LoginActivity extends AppCompatActivity {
 
                 if (TextUtils.isEmpty(phone)) {
                     showError("Введите номер телефона");
+                    return;
+                }
+
+                if (phone.length() < 10) {
+                    showError("Неверный формат номера");
                     return;
                 }
 

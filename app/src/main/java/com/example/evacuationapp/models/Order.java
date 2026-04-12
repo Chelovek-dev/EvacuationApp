@@ -1,42 +1,63 @@
 package com.example.evacuationapp.models;
 
+import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 public class Order implements Serializable {
-    private String orderId;
-    private String clientId;
-    private String driverId;
-    private String status; // waiting, accepted, in_progress, completed
+
+    @SerializedName("order_id")
+    private long orderId;
+
+    @SerializedName("client_id")
+    private long clientId;
+
+    @SerializedName("driver_id")
+    private long driverId;
+
+    @SerializedName("status")
+    private String status;
+
+    @SerializedName("pickup_address")
     private String pickupAddress;
+
+    @SerializedName("dropoff_address")
     private String dropoffAddress;
+
+    @SerializedName("price")
     private double price;
-    private long createdAt;
-    private long completedAt;
+
+    @SerializedName("created_at")
+    private String createdAt;   // сервер возвращает строку ISO
+
+    @SerializedName("completed_at")
+    private String completedAt; // может быть null
 
     public Order() {
         this.price = 1000.0;
         this.status = "waiting";
-        this.createdAt = System.currentTimeMillis();
+        this.createdAt = null;
+        this.completedAt = null;
     }
 
-    public Order(String clientId, String pickupAddress, String dropoffAddress) {
+    public Order(long clientId, String pickupAddress, String dropoffAddress) {
         this.clientId = clientId;
         this.pickupAddress = pickupAddress;
         this.dropoffAddress = dropoffAddress;
         this.price = 1000.0;
         this.status = "waiting";
-        this.createdAt = System.currentTimeMillis();
+        this.createdAt = null;
+        this.completedAt = null;
     }
 
     // Геттеры и сеттеры
-    public String getOrderId() { return orderId; }
-    public void setOrderId(String orderId) { this.orderId = orderId; }
+    public long getOrderId() { return orderId; }
+    public void setOrderId(long orderId) { this.orderId = orderId; }
 
-    public String getClientId() { return clientId; }
-    public void setClientId(String clientId) { this.clientId = clientId; }
+    public long getClientId() { return clientId; }
+    public void setClientId(long clientId) { this.clientId = clientId; }
 
-    public String getDriverId() { return driverId; }
-    public void setDriverId(String driverId) { this.driverId = driverId; }
+    public long getDriverId() { return driverId; }
+    public void setDriverId(long driverId) { this.driverId = driverId; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -50,13 +71,12 @@ public class Order implements Serializable {
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
 
-    public long getCreatedAt() { return createdAt; }
-    public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
-    public long getCompletedAt() { return completedAt; }
-    public void setCompletedAt(long completedAt) { this.completedAt = completedAt; }
+    public String getCompletedAt() { return completedAt; }
+    public void setCompletedAt(String completedAt) { this.completedAt = completedAt; }
 
-    // Для удобного отображения статуса на русском
     public String getStatusText() {
         switch (status) {
             case "waiting": return "Ожидание водителя";
