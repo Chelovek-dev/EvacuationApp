@@ -63,7 +63,7 @@ public class RoleSelectionActivity extends AppCompatActivity {
                     String token = (String) data.get("token");
                     Map<String, Object> userMap = (Map<String, Object>) data.get("user");
 
-                    Number userIdNumber = (Number) userMap.get("user_id");
+                    Number userIdNumber = (Number) userMap.get("userId");
                     long userId = userIdNumber.longValue();
                     String userRole = (String) userMap.get("role");
 

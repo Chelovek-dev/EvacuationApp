@@ -5,38 +5,36 @@ import java.io.Serializable;
 
 public class Order implements Serializable {
 
-    @SerializedName("order_id")
+    @SerializedName("orderId")
     private long orderId;
 
-    @SerializedName("client_id")
+    @SerializedName("clientId")
     private long clientId;
 
-    @SerializedName("driver_id")
+    @SerializedName("driverId")
     private long driverId;
 
     @SerializedName("status")
     private String status;
 
-    @SerializedName("pickup_address")
+    @SerializedName("pickupAddress")
     private String pickupAddress;
 
-    @SerializedName("dropoff_address")
+    @SerializedName("dropoffAddress")
     private String dropoffAddress;
 
     @SerializedName("price")
     private double price;
 
-    @SerializedName("created_at")
-    private String createdAt;   // сервер возвращает строку ISO
+    @SerializedName("createdAt")
+    private String createdAt;
 
-    @SerializedName("completed_at")
-    private String completedAt; // может быть null
+    @SerializedName("completedAt")
+    private String completedAt;
 
     public Order() {
         this.price = 1000.0;
         this.status = "waiting";
-        this.createdAt = null;
-        this.completedAt = null;
     }
 
     public Order(long clientId, String pickupAddress, String dropoffAddress) {
@@ -45,8 +43,6 @@ public class Order implements Serializable {
         this.dropoffAddress = dropoffAddress;
         this.price = 1000.0;
         this.status = "waiting";
-        this.createdAt = null;
-        this.completedAt = null;
     }
 
     // Геттеры и сеттеры

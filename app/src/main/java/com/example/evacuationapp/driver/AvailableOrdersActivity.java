@@ -1,7 +1,9 @@
 package com.example.evacuationapp.driver;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,11 +11,10 @@ import com.example.evacuationapp.R;
 import com.example.evacuationapp.models.Order;
 import com.example.evacuationapp.network.RetrofitClient;
 import com.example.evacuationapp.utils.PreferenceManager;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -21,6 +22,7 @@ import retrofit2.Response;
 public class AvailableOrdersActivity extends AppCompatActivity {
 
     private ListView lvOrders;
+    private Button btnBack;
     private ArrayAdapter<String> adapter;
     private List<Order> ordersList;
 
@@ -30,6 +32,10 @@ public class AvailableOrdersActivity extends AppCompatActivity {
         setContentView(R.layout.activity_available_orders);
 
         lvOrders = findViewById(R.id.lvOrders);
+        btnBack = findViewById(R.id.btnBack);
+
+        btnBack.setOnClickListener(v -> finish());
+
         loadAvailableOrders();
 
         lvOrders.setOnItemClickListener((parent, view, position, id) -> {
@@ -58,7 +64,7 @@ public class AvailableOrdersActivity extends AppCompatActivity {
                         lvOrders.setAdapter(adapter);
                     }
                 } else {
-                    Toast.makeText(AvailableOrdersActivity.this, "Ошибка загрузки", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AvailableOrdersActivity.this, "Ошибка загрузки заказов", Toast.LENGTH_SHORT).show();
                     finish();
                 }
             }
@@ -80,9 +86,13 @@ public class AvailableOrdersActivity extends AppCompatActivity {
         call.enqueue(new Callback<Order>() {
             @Override
             public void onResponse(Call<Order> call, Response<Order> response) {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Order acceptedOrder = response.body();
                     Toast.makeText(AvailableOrdersActivity.this, "Заказ принят!", Toast.LENGTH_SHORT).show();
-                    // TODO: можно перейти на экран управления текущим заказом
+
+                    Intent intent = new Intent(AvailableOrdersActivity.this, CurrentOrderActivity.class);
+                    intent.putExtra("order", acceptedOrder);
+                    startActivity(intent);
                     finish();
                 } else {
                     Toast.makeText(AvailableOrdersActivity.this, "Не удалось принять заказ", Toast.LENGTH_SHORT).show();

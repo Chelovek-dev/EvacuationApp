@@ -65,8 +65,8 @@ public class DriverMainActivity extends AppCompatActivity {
         });
 
         btnHistory.setOnClickListener(v -> {
-            // TODO: показать историю заказов водителя
-            Toast.makeText(DriverMainActivity.this, "История заказов", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(DriverMainActivity.this, DriverHistoryActivity.class);
+            startActivity(intent);
         });
 
         btnLogout.setOnClickListener(v -> {

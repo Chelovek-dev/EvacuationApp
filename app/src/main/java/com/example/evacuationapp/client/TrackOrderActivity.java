@@ -34,7 +34,6 @@ public class TrackOrderActivity extends AppCompatActivity {
         // Получаем ID заказа из Intent
         orderId = getIntent().getLongExtra("orderId", 0);
         if (orderId == 0) {
-            // Если вдруг передали объект Order (для обратной совместимости)
             Order tempOrder = (Order) getIntent().getSerializableExtra("order");
             if (tempOrder != null) {
                 orderId = tempOrder.getOrderId();
@@ -109,10 +108,8 @@ public class TrackOrderActivity extends AppCompatActivity {
 
     private void cancelOrder() {
         if (currentOrder == null) return;
-        // Для отмены можно отправить PUT /api/orders/{orderId}/status со статусом "cancelled"
-        // (если сервер поддерживает). Пока просто локально.
-        Toast.makeText(this, "Отмена заказа пока не реализована на сервере", Toast.LENGTH_SHORT).show();
-        // TODO: вызвать API отмены
+        // TODO: вызвать API отмены заказа (PUT /api/orders/{orderId}/status со статусом "cancelled")
+        Toast.makeText(this, "Отмена заказа пока не реализована", Toast.LENGTH_SHORT).show();
     }
 
     @Override

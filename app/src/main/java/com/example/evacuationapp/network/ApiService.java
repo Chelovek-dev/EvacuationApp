@@ -36,4 +36,8 @@ public interface ApiService {
 
     @GET("/api/location/{driverId}")
     Call<DriverLocation> getDriverLocation(@Path("driverId") long driverId);
+    @GET("/api/orders/driver/{driverId}")
+    Call<List<Order>> getDriverOrders(@Path("driverId") long driverId);
+    @GET("/api/auth/check/{phone}")
+    Call<Map<String, Object>> checkUserExists(@Path("phone") String phone);
 }
