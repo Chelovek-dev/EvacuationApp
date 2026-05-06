@@ -19,44 +19,59 @@
         android:layout_marginTop="32dp"
         android:layout_marginStart="16dp" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/pickupLayout"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/pickupContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Адрес подачи"
         app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp">
+        android:layout_marginTop="24dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPickupAddress"
-            android:layout_width="match_parent"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/pickupLayout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"/>
-    </com.google.android.material.textfield.TextInputLayout>
+            android:hint="Адрес подачи"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnCurrentLocation"
+            app:layout_constraintHorizontal_weight="4"
+            android:layout_marginEnd="8dp">
+
+            <EditText
+                android:id="@+id/etPickupAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnCurrentLocation"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="📍"
+            android:textSize="20sp"
+            app:layout_constraintTop_toTopOf="@id/pickupLayout"
+            app:layout_constraintBottom_toBottomOf="@id/pickupLayout"
+            app:layout_constraintStart_toEndOf="@id/pickupLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_weight="1" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/dropoffLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Адрес назначения"
-        app:layout_constraintTop_toBottomOf="@id/pickupLayout"
+        app:layout_constraintTop_toBottomOf="@id/pickupContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp">
+        android:layout_marginTop="16dp">
 
-        <com.google.android.material.textfield.TextInputEditText
+        <EditText
             android:id="@+id/etDropoffAddress"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"/>
+            android:layout_height="wrap_content" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
@@ -82,9 +97,7 @@
         app:layout_constraintBottom_toTopOf="@id/btnCancel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp" />
+        android:layout_marginBottom="16dp" />
 
     <Button
         android:id="@+id/btnCancel"
@@ -95,8 +108,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="32dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp" />
+        android:layout_marginBottom="32dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

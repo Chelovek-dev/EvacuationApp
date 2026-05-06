@@ -40,4 +40,6 @@ public interface ApiService {
     Call<List<Order>> getDriverOrders(@Path("driverId") long driverId);
     @GET("/api/auth/check/{phone}")
     Call<Map<String, Object>> checkUserExists(@Path("phone") String phone);
+    @PUT("/api/orders/{orderId}/cancel")
+    Call<Order> cancelOrder(@Path("orderId") long orderId);
 }

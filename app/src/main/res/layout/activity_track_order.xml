@@ -30,13 +30,27 @@
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp" />
 
+    <!-- КАРТА (добавлена) -->
+    <org.osmdroid.views.MapView
+        android:id="@+id/mapView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/tvStatus"
+        app:layout_constraintBottom_toTopOf="@id/orderCard"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp" />
+
     <androidx.cardview.widget.CardView
         android:id="@+id/orderCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:cardCornerRadius="8dp"
         app:cardElevation="4dp"
-        app:layout_constraintTop_toBottomOf="@id/tvStatus"
+        app:layout_constraintTop_toBottomOf="@id/mapView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="24dp"
@@ -83,10 +97,10 @@
         android:text="Отменить заказ"
         android:textAllCaps="false"
         android:backgroundTint="#F44336"
-        app:layout_constraintBottom_toTopOf="@id/btnBack"
+        app:layout_constraintTop_toBottomOf="@id/orderCard"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp"
+        android:layout_marginTop="24dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp" />
 
@@ -96,11 +110,13 @@
         android:layout_height="56dp"
         android:text="Назад"
         android:textAllCaps="false"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnCancelOrder"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
         android:layout_marginBottom="32dp"
         android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp" />
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
