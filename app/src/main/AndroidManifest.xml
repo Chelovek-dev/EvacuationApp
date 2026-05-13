@@ -35,6 +35,8 @@
         <activity android:name=".client.TrackOrderActivity" />
         <activity android:name=".client.HistoryActivity" />
         <activity android:name=".client.SelectLocationActivity" />
+        <activity android:name=".auth.VerifyCodeActivity" />
+        <activity android:name=".auth.RegisterActivity" />
 
     </application>
 

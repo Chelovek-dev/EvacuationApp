@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "80100072651",
+    "project_id": "com-example-evacuationapp",
+    "storage_bucket": "com-example-evacuationapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:80100072651:android:b1699e4dbcbf143474cf4e",
+        "android_client_info": {
+          "package_name": "com.example.evacuationapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCq-PSFAZYkKn4Uvd89s3WAZpzpxGimMug"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

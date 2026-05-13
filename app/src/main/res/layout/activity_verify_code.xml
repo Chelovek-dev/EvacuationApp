@@ -11,7 +11,7 @@
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Вход"
+        android:text="Подтверждение"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
@@ -19,49 +19,49 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="64dp" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/phoneLayout"
+    <TextView
+        android:id="@+id/tvPhone"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Номер телефона"
+        android:textSize="16sp"
+        android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="32dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/codeLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Код из SMS"
+        app:layout_constraintTop_toBottomOf="@id/tvPhone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPhone"
+            android:id="@+id/etCode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="phone"
-            android:maxLength="10" />
+            android:inputType="number"
+            android:maxLength="6" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
-        android:id="@+id/btnLogin"
+        android:id="@+id/btnVerify"
         android:layout_width="0dp"
         android:layout_height="56dp"
-        android:text="Войти"
+        android:text="Подтвердить"
         android:textAllCaps="false"
         android:backgroundTint="#2196F3"
-        app:layout_constraintTop_toBottomOf="@id/phoneLayout"
+        app:layout_constraintTop_toBottomOf="@id/codeLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="24dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp" />
-
-    <TextView
-        android:id="@+id/tvError"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:textColor="#F44336"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/btnLogin"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

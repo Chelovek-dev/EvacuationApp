@@ -1,12 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.example.evacuationapp"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.evacuationapp"
@@ -34,37 +33,34 @@ android {
 }
 
 dependencies {
-    // Retrofit (сетевые запросы)
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
+    implementation("com.google.firebase:firebase-auth")
+
+    // Retrofit + Gson
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 
+    // OSMDroid (карты)
     implementation("org.osmdroid:osmdroid-android:6.1.18")
     implementation("androidx.preference:preference:1.2.1")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.google.code.gson:gson:2.10.1")
+
+    // Location
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
-    // Gson (преобразование JSON)
-    implementation("com.google.code.gson:gson:2.10.1")
-
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
-    implementation("com.google.code.gson:gson:2.10.1")
-
+    // Material Design
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.cardview:cardview:1.0.0")
 
-    // Яндекс.Карты
-    implementation("com.yandex.android:maps.mobile:4.4.0-full")
-
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-
+    // AndroidX
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

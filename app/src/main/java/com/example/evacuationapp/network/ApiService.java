@@ -42,4 +42,9 @@ public interface ApiService {
     Call<Map<String, Object>> checkUserExists(@Path("phone") String phone);
     @PUT("/api/orders/{orderId}/cancel")
     Call<Order> cancelOrder(@Path("orderId") long orderId);
+    @POST("/api/auth/send-code")
+    Call<Map<String, Object>> sendCode(@Body Map<String, String> body);
+
+    @POST("/api/auth/verify-code")
+    Call<Map<String, Object>> verifyCode(@Body Map<String, String> body);
 }

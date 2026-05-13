@@ -17,23 +17,37 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class LoginActivity extends AppCompatActivity {
+public class RegisterActivity extends AppCompatActivity {
 
-    private EditText etPhone;
-    private Button btnLogin;
+    private EditText etName, etPhone;
+    private Button btnRegister;
     private TextView tvError;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.activity_register);
 
+        etName = findViewById(R.id.etName);
         etPhone = findViewById(R.id.etPhone);
-        btnLogin = findViewById(R.id.btnLogin);
+        btnRegister = findViewById(R.id.btnRegister);
         tvError = findViewById(R.id.tvError);
 
-        btnLogin.setOnClickListener(v -> {
+        // Получаем номер из Intent (передан с LoginActivity)
+        String phoneFromIntent = getIntent().getStringExtra("phone");
+        if (phoneFromIntent != null && !phoneFromIntent.isEmpty()) {
+            etPhone.setText(phoneFromIntent);
+            etPhone.setEnabled(false);  // номер уже подтверждён, не даём менять
+        }
+
+        btnRegister.setOnClickListener(v -> {
+            String name = etName.getText().toString().trim();
             String phone = etPhone.getText().toString().trim();
+
+            if (TextUtils.isEmpty(name)) {
+                showError("Введите имя");
+                return;
+            }
             if (TextUtils.isEmpty(phone)) {
                 showError("Введите номер телефона");
                 return;
@@ -42,55 +56,24 @@ public class LoginActivity extends AppCompatActivity {
                 showError("Введите 10 цифр (например, 9123456789)");
                 return;
             }
-            checkUserExists(phone);
+
+            sendCode(phone, name);
         });
     }
 
-    private void checkUserExists(String phone) {
-        Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-        intent.putExtra("phone", phone);  // ← передаём номер
-        startActivity(intent);
-        Call<Map<String, Object>> call = RetrofitClient.getApiService().checkUserExists(phone);
-        call.enqueue(new Callback<Map<String, Object>>() {
-            @Override
-            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    boolean exists = (boolean) response.body().get("exists");
-                    if (exists) {
-                        // Пользователь есть → отправляем код и входим
-                        String role = (String) response.body().get("role");
-                        sendCode(phone, role);
-                    } else {
-                        // Нет пользователя → идём на регистрацию
-                        Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-                        intent.putExtra("phone", phone);
-                        startActivity(intent);
-                    }
-                } else {
-                    showError("Ошибка проверки");
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
-                showError("Нет связи с сервером");
-            }
-        });
-    }
-
-    private void sendCode(String phone, String role) {
+    private void sendCode(String phone, String name) {
         Map<String, String> body = new HashMap<>();
         body.put("phone", phone);
-        body.put("role", role);
+        body.put("name", name);
 
         Call<Map<String, Object>> call = RetrofitClient.getApiService().sendCode(body);
         call.enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                 if (response.isSuccessful()) {
-                    Intent intent = new Intent(LoginActivity.this, VerifyCodeActivity.class);
+                    Intent intent = new Intent(RegisterActivity.this, VerifyCodeActivity.class);
                     intent.putExtra("phone", phone);
-                    intent.putExtra("existingRole", role);
+                    intent.putExtra("name", name);
                     startActivity(intent);
                 } else {
                     showError("Ошибка отправки кода");

@@ -21,6 +21,7 @@ public class RoleSelectionActivity extends AppCompatActivity {
 
     private Button btnClient, btnDriver;
     private String phone;
+    private String userName;  // ← добавить эту строку
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +29,8 @@ public class RoleSelectionActivity extends AppCompatActivity {
         setContentView(R.layout.activity_role_selection);
 
         phone = getIntent().getStringExtra("phone");
+        userName = getIntent().getStringExtra("name");  // ← получить имя
+
         if (phone == null) phone = "";
 
         btnClient = findViewById(R.id.btnClient);
@@ -52,7 +55,7 @@ public class RoleSelectionActivity extends AppCompatActivity {
         Map<String, String> body = new HashMap<>();
         body.put("phone", phone);
         body.put("role", role);
-        body.put("name", "");
+        body.put("name", userName != null ? userName : "");  // ← передаём имя
 
         Call<Map<String, Object>> call = RetrofitClient.getApiService().login(body);
         call.enqueue(new Callback<Map<String, Object>>() {
