@@ -34,6 +34,7 @@
         <activity android:name=".client.CreateOrderActivity" />
         <activity android:name=".client.TrackOrderActivity" />
         <activity android:name=".client.HistoryActivity" />
+        <activity android:name=".client.SelectLocationActivity" />
 
     </application>
 

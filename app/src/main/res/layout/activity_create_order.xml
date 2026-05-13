@@ -19,6 +19,7 @@
         android:layout_marginTop="32dp"
         android:layout_marginStart="16dp" />
 
+    <!-- Контейнер для адреса подачи -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/pickupContainer"
         android:layout_width="0dp"
@@ -58,31 +59,55 @@
             app:layout_constraintHorizontal_weight="1" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/dropoffLayout"
+    <!-- Контейнер для адреса назначения -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/dropoffContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Адрес назначения"
         app:layout_constraintTop_toBottomOf="@id/pickupContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp">
 
-        <EditText
-            android:id="@+id/etDropoffAddress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-    </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/dropoffLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="Адрес назначения"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnSelectOnMap"
+            app:layout_constraintHorizontal_weight="4"
+            android:layout_marginEnd="8dp">
+
+            <EditText
+                android:id="@+id/etDropoffAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnSelectOnMap"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="🗺️"
+            android:textSize="20sp"
+            app:layout_constraintTop_toTopOf="@id/dropoffLayout"
+            app:layout_constraintBottom_toBottomOf="@id/dropoffLayout"
+            app:layout_constraintStart_toEndOf="@id/dropoffLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_weight="1" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView
         android:id="@+id/tvPrice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Стоимость: 1000 ₽"
+        android:text="Стоимость: рассчитывается..."
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="#2196F3"
-        app:layout_constraintTop_toBottomOf="@id/dropoffLayout"
+        app:layout_constraintTop_toBottomOf="@id/dropoffContainer"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="24dp"
         android:layout_marginStart="16dp" />
