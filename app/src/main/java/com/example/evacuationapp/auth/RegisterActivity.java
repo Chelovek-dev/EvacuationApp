@@ -19,7 +19,7 @@ import retrofit2.Response;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private EditText etName, etPhone;
+    private EditText etName, etPhone, etEmail;
     private Button btnRegister;
     private TextView tvError;
 
@@ -30,6 +30,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         etName = findViewById(R.id.etName);
         etPhone = findViewById(R.id.etPhone);
+        etEmail = findViewById(R.id.etEmail);
         btnRegister = findViewById(R.id.btnRegister);
         tvError = findViewById(R.id.tvError);
 
@@ -37,12 +38,13 @@ public class RegisterActivity extends AppCompatActivity {
         String phoneFromIntent = getIntent().getStringExtra("phone");
         if (phoneFromIntent != null && !phoneFromIntent.isEmpty()) {
             etPhone.setText(phoneFromIntent);
-            etPhone.setEnabled(false);  // номер уже подтверждён, не даём менять
+            etPhone.setEnabled(false); // номер уже введён, не даём менять
         }
 
         btnRegister.setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String phone = etPhone.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
 
             if (TextUtils.isEmpty(name)) {
                 showError("Введите имя");
@@ -56,15 +58,25 @@ public class RegisterActivity extends AppCompatActivity {
                 showError("Введите 10 цифр (например, 9123456789)");
                 return;
             }
+            if (TextUtils.isEmpty(email)) {
+                showError("Введите email");
+                return;
+            }
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                showError("Введите корректный email");
+                return;
+            }
 
-            sendCode(phone, name);
+            sendCode(phone, name, email);
         });
     }
 
-    private void sendCode(String phone, String name) {
+    private void sendCode(String phone, String name, String email) {
         Map<String, String> body = new HashMap<>();
         body.put("phone", phone);
         body.put("name", name);
+        body.put("email", email);
+        body.put("role", "client"); // при регистрации пока роль client, потом можно выбрать
 
         Call<Map<String, Object>> call = RetrofitClient.getApiService().sendCode(body);
         call.enqueue(new Callback<Map<String, Object>>() {
@@ -74,6 +86,7 @@ public class RegisterActivity extends AppCompatActivity {
                     Intent intent = new Intent(RegisterActivity.this, VerifyCodeActivity.class);
                     intent.putExtra("phone", phone);
                     intent.putExtra("name", name);
+                    intent.putExtra("email", email);
                     startActivity(intent);
                 } else {
                     showError("Ошибка отправки кода");

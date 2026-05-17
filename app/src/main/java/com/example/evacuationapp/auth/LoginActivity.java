@@ -60,9 +60,10 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     boolean exists = (boolean) response.body().get("exists");
                     if (exists) {
-                        String role = (String) response.body().get("role");
-                        sendCode(phone, role);
+                        // Пользователь есть → отправляем код на email
+                        sendCode(phone, null, null);
                     } else {
+                        // Нет пользователя → идём на регистрацию
                         Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
                         intent.putExtra("phone", phone);
                         startActivity(intent);
@@ -81,10 +82,11 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void sendCode(String phone, String role) {
+    private void sendCode(String phone, String name, String email) {
         Map<String, String> body = new HashMap<>();
         body.put("phone", phone);
-        body.put("role", role);
+        if (name != null) body.put("name", name);
+        if (email != null) body.put("email", email);
 
         Call<Map<String, Object>> call = RetrofitClient.getApiService().sendCode(body);
         call.enqueue(new Callback<Map<String, Object>>() {
@@ -93,7 +95,6 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     Intent intent = new Intent(LoginActivity.this, VerifyCodeActivity.class);
                     intent.putExtra("phone", phone);
-                    intent.putExtra("role", role);
                     startActivity(intent);
                 } else {
                     showError("Ошибка отправки кода");
