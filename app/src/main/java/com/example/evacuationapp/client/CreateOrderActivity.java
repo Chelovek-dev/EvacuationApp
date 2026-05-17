@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -50,6 +51,8 @@ public class CreateOrderActivity extends AppCompatActivity {
     private long clientId;
     private FusedLocationProviderClient fusedLocationClient;
     private int currentPrice = 3500;
+    private boolean isPickupValid = false;
+    private boolean isDropoffValid = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +87,7 @@ public class CreateOrderActivity extends AppCompatActivity {
             startActivityForResult(intent, SELECT_DROPOFF_LOCATION_REQUEST_CODE);
         });
 
-        // Слушатели изменения текста для динамического расчёта цены
+        // Слушатели изменения текста
         TextWatcher textWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -94,12 +97,87 @@ public class CreateOrderActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
+                validateAddresses();
                 calculateAndUpdatePrice();
             }
         };
 
         etPickup.addTextChangedListener(textWatcher);
         etDropoff.addTextChangedListener(textWatcher);
+    }
+
+    private void validateAddresses() {
+        String pickup = etPickup.getText().toString().trim();
+        String dropoff = etDropoff.getText().toString().trim();
+
+        if (!TextUtils.isEmpty(pickup)) {
+            checkAddressExists(pickup, true);
+        } else {
+            isPickupValid = false;
+        }
+
+        if (!TextUtils.isEmpty(dropoff)) {
+            checkAddressExists(dropoff, false);
+        } else {
+            isDropoffValid = false;
+        }
+    }
+
+    private void checkAddressExists(String address, boolean isPickup) {
+        new Thread(() -> {
+            // Проверяем, есть ли геокоординаты у введённого адреса
+            GeoPoint point = getCoordinatesFromAddress(address);
+            String houseNumber = extractHouseNumber(address);
+            boolean hasHouseNumber = (houseNumber != null && !houseNumber.isEmpty());
+
+            // Дополнительная проверка: есть ли вообще какая-то улица/место
+            boolean anyMatch = isAnyAddressExists(address);
+
+            runOnUiThread(() -> {
+                String errorMsg = null;
+                boolean isValid = false;
+
+                if (point == null && !anyMatch) {
+                    // Случай 1: адрес вообще не найден
+                    errorMsg = "Адрес не найден. Проверьте правильность ввода";
+                    isValid = false;
+                } else if (hasHouseNumber && point == null) {
+                    // Случай 2: улица есть, но номер дома не найден
+                    errorMsg = "Дом " + houseNumber + " не найден. Проверьте номер";
+                    isValid = false;
+                } else {
+                    // Случай 3: адрес корректен
+                    isValid = true;
+                }
+
+                if (isPickup) {
+                    isPickupValid = isValid;
+                    if (errorMsg != null) {
+                        etPickup.setError(errorMsg);
+                    } else {
+                        etPickup.setError(null);
+                    }
+                } else {
+                    isDropoffValid = isValid;
+                    if (errorMsg != null) {
+                        etDropoff.setError(errorMsg);
+                    } else {
+                        etDropoff.setError(null);
+                    }
+                }
+            });
+        }).start();
+    }
+
+    private boolean isAnyAddressExists(String address) {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocationName(address, 1);
+            return addresses != null && !addresses.isEmpty();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private void getCurrentLocation() {
@@ -182,13 +260,54 @@ public class CreateOrderActivity extends AppCompatActivity {
     private GeoPoint getCoordinatesFromAddress(String address) {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
-            List<Address> addresses = geocoder.getFromLocationName(address, 1);
+            // Получаем несколько вариантов адреса для проверки
+            List<Address> addresses = geocoder.getFromLocationName(address, 5);
             if (addresses != null && !addresses.isEmpty()) {
-                Address location = addresses.get(0);
-                return new GeoPoint(location.getLatitude(), location.getLongitude());
+
+                // Извлекаем номер дома из введённой строки
+                String houseNumber = extractHouseNumber(address);
+                boolean hasHouseNumber = (houseNumber != null && !houseNumber.isEmpty());
+
+                // Ищем адрес с совпадающим номером дома
+                for (Address loc : addresses) {
+                    String addressLine = loc.getAddressLine(0);
+                    double lat = loc.getLatitude();
+                    double lon = loc.getLongitude();
+
+                    if (lat == 0.0 && lon == 0.0) continue;
+
+                    // Если номер дома не требуется или он совпадает
+                    if (!hasHouseNumber) {
+                        return new GeoPoint(lat, lon);
+                    }
+
+                    // Проверяем, содержит ли найденный адрес нужный номер дома
+                    if (addressLine != null && addressLine.contains(houseNumber)) {
+                        return new GeoPoint(lat, lon);
+                    }
+                }
+
+                // Если номер дома был в запросе, но не найден — возвращаем null
+                if (hasHouseNumber) {
+                    return null;
+                }
+
+                // Если номер дома не требовался, возвращаем первый результат
+                Address first = addresses.get(0);
+                return new GeoPoint(first.getLatitude(), first.getLongitude());
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        return null;
+    }
+
+    private String extractHouseNumber(String address) {
+        // Ищем номер дома в строке (цифры, возможно с буквой)
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\b(\\d+[а-я]?)\\b");
+        java.util.regex.Matcher matcher = pattern.matcher(address);
+        if (matcher.find()) {
+            return matcher.group(1);
         }
         return null;
     }
@@ -277,7 +396,26 @@ public class CreateOrderActivity extends AppCompatActivity {
         String comment = etComment.getText().toString().trim();
 
         if (TextUtils.isEmpty(pickup) || TextUtils.isEmpty(dropoff)) {
-            Toast.makeText(this, "Заполните адреса", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Заполните все адреса", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Проверка валидности адресов
+        if (!isPickupValid) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Адрес не найден")
+                    .setMessage("Адрес подачи не удалось распознать. Пожалуйста, уточните адрес или выберите на карте.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            return;
+        }
+
+        if (!isDropoffValid) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Адрес не найден")
+                    .setMessage("Адрес назначения не удалось распознать. Пожалуйста, уточните адрес или выберите на карте.")
+                    .setPositiveButton("OK", null)
+                    .show();
             return;
         }
 
