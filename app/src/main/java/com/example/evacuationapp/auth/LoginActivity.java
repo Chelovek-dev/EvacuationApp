@@ -47,33 +47,36 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void checkUserExists(String phone) {
-        Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-        intent.putExtra("phone", phone);  // ← передаём номер
-        startActivity(intent);
+        btnLogin.setEnabled(false);
+        btnLogin.setText("Проверка...");
+
         Call<Map<String, Object>> call = RetrofitClient.getApiService().checkUserExists(phone);
         call.enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                btnLogin.setEnabled(true);
+                btnLogin.setText("Войти");
+
                 if (response.isSuccessful() && response.body() != null) {
                     boolean exists = (boolean) response.body().get("exists");
                     if (exists) {
-                        // Пользователь есть → отправляем код и входим
                         String role = (String) response.body().get("role");
                         sendCode(phone, role);
                     } else {
-                        // Нет пользователя → идём на регистрацию
                         Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
                         intent.putExtra("phone", phone);
                         startActivity(intent);
                     }
                 } else {
-                    showError("Ошибка проверки");
+                    showError("Ошибка проверки. Попробуйте позже.");
                 }
             }
 
             @Override
             public void onFailure(Call<Map<String, Object>> call, Throwable t) {
-                showError("Нет связи с сервером");
+                btnLogin.setEnabled(true);
+                btnLogin.setText("Войти");
+                showError("Нет связи с сервером. Проверьте интернет.");
             }
         });
     }
@@ -90,7 +93,7 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     Intent intent = new Intent(LoginActivity.this, VerifyCodeActivity.class);
                     intent.putExtra("phone", phone);
-                    intent.putExtra("existingRole", role);
+                    intent.putExtra("role", role);
                     startActivity(intent);
                 } else {
                     showError("Ошибка отправки кода");

@@ -1,138 +1,261 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:fitsSystemWindows="true">
+    android:fillViewport="true"
+    android:background="#F5F5F5">
 
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Создание заказа"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="32dp"
-        android:layout_marginStart="16dp" />
-
-    <!-- Контейнер для адреса подачи -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/pickupContainer"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/title"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp">
+        android:padding="16dp"
+        android:fitsSystemWindows="true">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/pickupLayout"
-            android:layout_width="0dp"
+        <!-- Заголовок с логотипом -->
+        <LinearLayout
+            android:id="@+id/headerLayout"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Адрес подачи"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnCurrentLocation"
-            app:layout_constraintHorizontal_weight="4"
-            android:layout_marginEnd="8dp">
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="8dp">
 
-            <EditText
-                android:id="@+id/etPickupAddress"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </com.google.android.material.textfield.TextInputLayout>
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_tow_truck" />
 
-        <Button
-            android:id="@+id/btnCurrentLocation"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:text="📍"
-            android:textSize="20sp"
-            app:layout_constraintTop_toTopOf="@id/pickupLayout"
-            app:layout_constraintBottom_toBottomOf="@id/pickupLayout"
-            app:layout_constraintStart_toEndOf="@id/pickupLayout"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_weight="1" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Создание заказа"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:layout_marginStart="12dp" />
+        </LinearLayout>
 
-    <!-- Контейнер для адреса назначения -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/dropoffContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/pickupContainer"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/dropoffLayout"
+        <!-- Карточка адресов -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardAddresses"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:hint="Адрес назначения"
-            app:layout_constraintTop_toTopOf="parent"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:layout_constraintTop_toBottomOf="@id/headerLayout"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnSelectOnMap"
-            app:layout_constraintHorizontal_weight="4"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="24dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Адрес подачи -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/pickupLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Адрес подачи"
+                        android:layout_marginEnd="8dp">
+
+                        <EditText
+                            android:id="@+id/etPickupAddress"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="16sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnCurrentLocation"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:text="📍"
+                            android:textSize="18sp"
+                            android:backgroundTint="#E0E0E0"
+                            android:layout_marginEnd="4dp"
+                            android:tooltipText="Текущее местоположение" />
+
+                        <Button
+                            android:id="@+id/btnPickupOnMap"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:text="🗺️"
+                            android:textSize="18sp"
+                            android:backgroundTint="#E0E0E0"
+                            android:tooltipText="Выбрать на карте" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Адрес назначения -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/dropoffLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Адрес назначения"
+                        android:layout_marginEnd="8dp">
+
+                        <EditText
+                            android:id="@+id/etDropoffAddress"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="16sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <Button
+                        android:id="@+id/btnSelectOnMap"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:text="🗺️"
+                        android:textSize="18sp"
+                        android:backgroundTint="#E0E0E0"
+                        android:tooltipText="Выбрать на карте" />
+                </LinearLayout>
+
+                <!-- Контактный телефон -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/contactPhoneLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="📞 Контактный телефон (для связи)"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etContactPhone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="phone"
+                        android:maxLength="10"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Комментарий -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/commentLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="💬 Комментарий для водителя"
+                    android:layout_marginTop="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etComment"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine"
+                        android:maxLines="3"
+                        android:textSize="16sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Карточка стоимости -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardPrice"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#E3F2FD"
+            app:layout_constraintTop_toBottomOf="@id/cardAddresses"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp">
 
-            <EditText
-                android:id="@+id/etDropoffAddress"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="16dp">
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💰 "
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:id="@+id/tvPrice"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Стоимость: рассчитывается..."
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#2196F3" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Кнопка создания заказа -->
         <Button
-            android:id="@+id/btnSelectOnMap"
+            android:id="@+id/btnCreateOrder"
             android:layout_width="0dp"
             android:layout_height="56dp"
-            android:text="🗺️"
-            android:textSize="20sp"
-            app:layout_constraintTop_toTopOf="@id/dropoffLayout"
-            app:layout_constraintBottom_toBottomOf="@id/dropoffLayout"
-            app:layout_constraintStart_toEndOf="@id/dropoffLayout"
+            android:text="Создать заказ"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:backgroundTint="#4CAF50"
+            app:layout_constraintTop_toBottomOf="@id/cardPrice"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_weight="1" />
+            android:layout_marginTop="24dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Кнопка отмены -->
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="Отмена"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:backgroundTint="#F5F5F5"
+            android:textColor="#757575"
+            app:layout_constraintTop_toBottomOf="@id/btnCreateOrder"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="32dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <TextView
-        android:id="@+id/tvPrice"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Стоимость: рассчитывается..."
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#2196F3"
-        app:layout_constraintTop_toBottomOf="@id/dropoffContainer"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="16dp" />
-
-    <Button
-        android:id="@+id/btnCreateOrder"
-        android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:text="Создать заказ"
-        android:textAllCaps="false"
-        android:backgroundTint="#4CAF50"
-        app:layout_constraintBottom_toTopOf="@id/btnCancel"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp" />
-
-    <Button
-        android:id="@+id/btnCancel"
-        android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:text="Отмена"
-        android:textAllCaps="false"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="32dp" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

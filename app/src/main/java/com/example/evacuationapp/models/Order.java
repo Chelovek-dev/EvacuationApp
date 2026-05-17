@@ -32,6 +32,12 @@ public class Order implements Serializable {
     @SerializedName("completedAt")
     private String completedAt;
 
+    @SerializedName("contactPhone")
+    private String contactPhone;
+
+    @SerializedName("comment")
+    private String comment;
+
     public Order() {
         this.price = 1000.0;
         this.status = "waiting";
@@ -73,12 +79,19 @@ public class Order implements Serializable {
     public String getCompletedAt() { return completedAt; }
     public void setCompletedAt(String completedAt) { this.completedAt = completedAt; }
 
+    public String getContactPhone() { return contactPhone; }
+    public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
+
+    public String getComment() { return comment; }
+    public void setComment(String comment) { this.comment = comment; }
+
     public String getStatusText() {
         switch (status) {
             case "waiting": return "Ожидание водителя";
             case "accepted": return "Водитель назначен";
             case "in_progress": return "Выполняется";
             case "completed": return "Завершен";
+            case "cancelled": return "Отменен";
             default: return status;
         }
     }

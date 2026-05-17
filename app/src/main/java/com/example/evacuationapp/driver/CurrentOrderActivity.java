@@ -4,9 +4,11 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.evacuationapp.R;
@@ -35,7 +37,8 @@ import retrofit2.Response;
 public class CurrentOrderActivity extends AppCompatActivity {
 
     private TextView tvOrderId, tvPickup, tvDropoff, tvPrice, tvStatus;
-    private Button btnStart, btnComplete, btnBack;
+    private TextView tvClientPhone, tvContactPhone, tvComment;
+    private Button btnStart, btnComplete, btnCancelByDriver, btnBack;
     private MapView mapView;
     private Marker clientMarker;
     private Order currentOrder;
@@ -61,8 +64,12 @@ public class CurrentOrderActivity extends AppCompatActivity {
         tvDropoff = findViewById(R.id.tvDropoff);
         tvPrice = findViewById(R.id.tvPrice);
         tvStatus = findViewById(R.id.tvStatus);
+        tvClientPhone = findViewById(R.id.tvClientPhone);
+        tvContactPhone = findViewById(R.id.tvContactPhone);
+        tvComment = findViewById(R.id.tvComment);
         btnStart = findViewById(R.id.btnStart);
         btnComplete = findViewById(R.id.btnComplete);
+        btnCancelByDriver = findViewById(R.id.btnCancelByDriver);
         btnBack = findViewById(R.id.btnBack);
         mapView = findViewById(R.id.mapView);
 
@@ -84,13 +91,14 @@ public class CurrentOrderActivity extends AppCompatActivity {
         }
 
         displayOrder();
+        loadClientInfo(currentOrder.getClientId());
         showClientOnMap();
 
         btnStart.setOnClickListener(v -> updateStatus("in_progress"));
         btnComplete.setOnClickListener(v -> updateStatus("completed"));
+        btnCancelByDriver.setOnClickListener(v -> cancelOrderByDriver());
         btnBack.setOnClickListener(v -> finish());
 
-        // Запускаем отправку геолокации
         startSendingLocation();
     }
 
@@ -101,24 +109,50 @@ public class CurrentOrderActivity extends AppCompatActivity {
         tvPrice.setText("Стоимость: " + (int) currentOrder.getPrice() + " ₽");
         tvStatus.setText("Статус: " + currentOrder.getStatusText());
 
+        // Отображаем контактный телефон и комментарий
+        tvContactPhone.setText("Контактный телефон: " + (currentOrder.getContactPhone() != null && !currentOrder.getContactPhone().isEmpty()
+                ? currentOrder.getContactPhone() : "не указан"));
+        tvComment.setText("Комментарий: " + (currentOrder.getComment() != null && !currentOrder.getComment().isEmpty()
+                ? currentOrder.getComment() : "нет"));
+
         if ("accepted".equals(currentOrder.getStatus())) {
             btnStart.setEnabled(true);
             btnComplete.setEnabled(false);
+            btnCancelByDriver.setEnabled(true);
         } else if ("in_progress".equals(currentOrder.getStatus())) {
             btnStart.setEnabled(false);
             btnComplete.setEnabled(true);
+            btnCancelByDriver.setEnabled(true);
         } else if ("completed".equals(currentOrder.getStatus())) {
             btnStart.setEnabled(false);
             btnComplete.setEnabled(false);
+            btnCancelByDriver.setEnabled(false);
             stopSendingLocation();
         }
     }
 
+    private void loadClientInfo(long clientId) {
+        Call<Map<String, Object>> call = RetrofitClient.getApiService().getUserById(clientId);
+        call.enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String phone = (String) response.body().get("phone");
+                    tvClientPhone.setText("Телефон клиента: " + phone);
+                } else {
+                    tvClientPhone.setText("Телефон клиента: не указан");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                tvClientPhone.setText("Телефон клиента: ошибка загрузки");
+            }
+        });
+    }
+
     private void showClientOnMap() {
-        if (mapView == null) {
-            Toast.makeText(this, "Карта не инициализирована", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (mapView == null) return;
 
         mapView.getOverlays().clear();
 
@@ -131,6 +165,10 @@ public class CurrentOrderActivity extends AppCompatActivity {
             pickupMarker.setSnippet(currentOrder.getPickupAddress());
             pickupMarker.setPosition(pickupPoint);
             mapView.getOverlays().add(pickupMarker);
+            mapView.getController().setCenter(pickupPoint);
+            mapView.getController().setZoom(14.0);
+        } else {
+            Toast.makeText(this, "Не удалось определить координаты места подачи: " + currentOrder.getPickupAddress(), Toast.LENGTH_LONG).show();
         }
 
         // Маркер места назначения
@@ -142,28 +180,13 @@ public class CurrentOrderActivity extends AppCompatActivity {
             dropoffMarker.setSnippet(currentOrder.getDropoffAddress());
             dropoffMarker.setPosition(dropoffPoint);
             mapView.getOverlays().add(dropoffMarker);
-        }
-
-        // Центрируем карту на месте подачи (или на месте назначения, если подача не найдена)
-        if (pickupPoint != null) {
-            mapView.getController().setCenter(pickupPoint);
-            mapView.getController().setZoom(14.0);
-            Toast.makeText(this, "Точки отмечены на карте", Toast.LENGTH_SHORT).show();
-        } else if (dropoffPoint != null) {
-            mapView.getController().setCenter(dropoffPoint);
-            mapView.getController().setZoom(14.0);
-            Toast.makeText(this, "Точка назначения отмечена на карте", Toast.LENGTH_SHORT).show();
         } else {
-            GeoPoint defaultPoint = new GeoPoint(55.7558, 37.6173);
-            mapView.getController().setCenter(defaultPoint);
-            Toast.makeText(this, "Не удалось определить координаты", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Не удалось определить координаты места назначения: " + currentOrder.getDropoffAddress(), Toast.LENGTH_LONG).show();
         }
     }
 
     private GeoPoint getPointFromAddress(String address) {
-        if (address == null || address.isEmpty()) {
-            return null;
-        }
+        if (address == null || address.isEmpty()) return null;
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
             List<Address> addresses = geocoder.getFromLocationName(address, 1);
@@ -209,6 +232,42 @@ public class CurrentOrderActivity extends AppCompatActivity {
         });
     }
 
+    private void cancelOrderByDriver() {
+        if (currentOrder == null) return;
+        if ("completed".equals(currentOrder.getStatus())) {
+            Toast.makeText(this, "Заказ уже завершён, отмена невозможна", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Отмена заказа")
+                .setMessage("Вы уверены, что хотите отменить этот заказ? Он снова станет доступен другим водителям.")
+                .setPositiveButton("Да", (dialog, which) -> {
+                    Map<String, Long> body = new HashMap<>();
+                    body.put("driverId", driverId);
+
+                    Call<Order> call = RetrofitClient.getApiService().cancelOrderByDriver(currentOrder.getOrderId(), body);
+                    call.enqueue(new Callback<Order>() {
+                        @Override
+                        public void onResponse(Call<Order> call, Response<Order> response) {
+                            if (response.isSuccessful()) {
+                                Toast.makeText(CurrentOrderActivity.this, "Заказ отменён", Toast.LENGTH_SHORT).show();
+                                finish();
+                            } else {
+                                Toast.makeText(CurrentOrderActivity.this, "Не удалось отменить заказ", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<Order> call, Throwable t) {
+                            Toast.makeText(CurrentOrderActivity.this, "Нет связи с сервером", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .setNegativeButton("Нет", null)
+                .show();
+    }
+
     private void startSendingLocation() {
         locationTracker = new LocationTracker(this);
         locationTracker.startLocationUpdates(this, location -> {
@@ -216,22 +275,11 @@ public class CurrentOrderActivity extends AppCompatActivity {
                 sendLocationToServer(location.getLatitude(), location.getLongitude());
             }
         });
-
-        sendLocationRunnable = new Runnable() {
-            @Override
-            public void run() {
-                handler.postDelayed(this, 5000);
-            }
-        };
-        handler.post(sendLocationRunnable);
     }
 
     private void stopSendingLocation() {
         if (locationTracker != null) {
             locationTracker.stopLocationUpdates();
-        }
-        if (handler != null && sendLocationRunnable != null) {
-            handler.removeCallbacks(sendLocationRunnable);
         }
     }
 

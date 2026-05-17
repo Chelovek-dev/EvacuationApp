@@ -38,7 +38,7 @@ public class VerifyCodeActivity extends AppCompatActivity {
 
         phoneNumber = getIntent().getStringExtra("phone");
         userName = getIntent().getStringExtra("name");
-        existingRole = getIntent().getStringExtra("existingRole");
+        existingRole = getIntent().getStringExtra("role");
 
         tvPhone.setText("Код отправлен на +7" + phoneNumber);
 
@@ -67,11 +67,14 @@ public class VerifyCodeActivity extends AppCompatActivity {
                         intent.putExtra("phone", phoneNumber);
                         intent.putExtra("name", userName);
                         startActivity(intent);
+                        finish();
                     } else if (existingRole != null) {
                         // Существующий пользователь → вход
                         loginWithRole(phoneNumber, existingRole);
+                    } else {
+                        // Если роль не передана, запрашиваем с сервера
+                        checkUserAndLogin();
                     }
-                    finish();
                 } else {
                     Toast.makeText(VerifyCodeActivity.this, "Неверный код", Toast.LENGTH_SHORT).show();
                 }
@@ -80,6 +83,32 @@ public class VerifyCodeActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<Map<String, Object>> call, Throwable t) {
                 Toast.makeText(VerifyCodeActivity.this, "Нет связи с сервером", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void checkUserAndLogin() {
+        Call<Map<String, Object>> call = RetrofitClient.getApiService().checkUserExists(phoneNumber);
+        call.enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    boolean exists = (boolean) response.body().get("exists");
+                    if (exists) {
+                        String role = (String) response.body().get("role");
+                        loginWithRole(phoneNumber, role);
+                    } else {
+                        Intent intent = new Intent(VerifyCodeActivity.this, RoleSelectionActivity.class);
+                        intent.putExtra("phone", phoneNumber);
+                        startActivity(intent);
+                        finish();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                Toast.makeText(VerifyCodeActivity.this, "Ошибка проверки", Toast.LENGTH_SHORT).show();
             }
         });
     }

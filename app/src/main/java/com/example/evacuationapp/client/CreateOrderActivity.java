@@ -41,11 +41,12 @@ import retrofit2.Response;
 public class CreateOrderActivity extends AppCompatActivity {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
-    private static final int SELECT_LOCATION_REQUEST_CODE = 200;
+    private static final int SELECT_PICKUP_LOCATION_REQUEST_CODE = 101;
+    private static final int SELECT_DROPOFF_LOCATION_REQUEST_CODE = 102;
 
-    private EditText etPickup, etDropoff;
+    private EditText etPickup, etDropoff, etContactPhone, etComment;
     private TextView tvPrice;
-    private Button btnCreate, btnCancel, btnCurrentLocation, btnSelectOnMap;
+    private Button btnCreate, btnCancel, btnCurrentLocation, btnPickupOnMap, btnSelectOnMap;
     private long clientId;
     private FusedLocationProviderClient fusedLocationClient;
     private int currentPrice = 3500;
@@ -60,18 +61,27 @@ public class CreateOrderActivity extends AppCompatActivity {
 
         etPickup = findViewById(R.id.etPickupAddress);
         etDropoff = findViewById(R.id.etDropoffAddress);
+        etContactPhone = findViewById(R.id.etContactPhone);
+        etComment = findViewById(R.id.etComment);
         tvPrice = findViewById(R.id.tvPrice);
         btnCreate = findViewById(R.id.btnCreateOrder);
         btnCancel = findViewById(R.id.btnCancel);
         btnCurrentLocation = findViewById(R.id.btnCurrentLocation);
+        btnPickupOnMap = findViewById(R.id.btnPickupOnMap);
         btnSelectOnMap = findViewById(R.id.btnSelectOnMap);
 
         btnCreate.setOnClickListener(v -> createOrder());
         btnCancel.setOnClickListener(v -> finish());
         btnCurrentLocation.setOnClickListener(v -> getCurrentLocation());
+
+        btnPickupOnMap.setOnClickListener(v -> {
+            Intent intent = new Intent(CreateOrderActivity.this, SelectLocationActivity.class);
+            startActivityForResult(intent, SELECT_PICKUP_LOCATION_REQUEST_CODE);
+        });
+
         btnSelectOnMap.setOnClickListener(v -> {
             Intent intent = new Intent(CreateOrderActivity.this, SelectLocationActivity.class);
-            startActivityForResult(intent, SELECT_LOCATION_REQUEST_CODE);
+            startActivityForResult(intent, SELECT_DROPOFF_LOCATION_REQUEST_CODE);
         });
 
         // Слушатели изменения текста для динамического расчёта цены
@@ -147,7 +157,6 @@ public class CreateOrderActivity extends AppCompatActivity {
             return;
         }
 
-        // Получаем координаты в отдельном потоке
         new Thread(() -> {
             GeoPoint pickupPoint = getCoordinatesFromAddress(pickup);
             GeoPoint dropoffPoint = getCoordinatesFromAddress(dropoff);
@@ -230,14 +239,18 @@ public class CreateOrderActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == SELECT_LOCATION_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+        if (resultCode == RESULT_OK && data != null) {
             double lat = data.getDoubleExtra("latitude", 0);
             double lon = data.getDoubleExtra("longitude", 0);
             if (lat != 0 && lon != 0) {
                 new Thread(() -> {
                     String address = getAddressFromCoordinates(lat, lon);
                     runOnUiThread(() -> {
-                        etDropoff.setText(address);
+                        if (requestCode == SELECT_PICKUP_LOCATION_REQUEST_CODE) {
+                            etPickup.setText(address);
+                        } else if (requestCode == SELECT_DROPOFF_LOCATION_REQUEST_CODE) {
+                            etDropoff.setText(address);
+                        }
                     });
                 }).start();
             }
@@ -260,9 +273,11 @@ public class CreateOrderActivity extends AppCompatActivity {
     private void createOrder() {
         String pickup = etPickup.getText().toString().trim();
         String dropoff = etDropoff.getText().toString().trim();
+        String contactPhone = etContactPhone.getText().toString().trim();
+        String comment = etComment.getText().toString().trim();
 
         if (TextUtils.isEmpty(pickup) || TextUtils.isEmpty(dropoff)) {
-            Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Заполните адреса", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -272,6 +287,8 @@ public class CreateOrderActivity extends AppCompatActivity {
         order.setDropoffAddress(dropoff);
         order.setStatus("waiting");
         order.setPrice(currentPrice);
+        order.setContactPhone(contactPhone);
+        order.setComment(comment);
 
         Call<Order> call = RetrofitClient.getApiService().createOrder(order);
         call.enqueue(new Callback<Order>() {
