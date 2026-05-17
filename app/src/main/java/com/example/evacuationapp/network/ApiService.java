@@ -55,4 +55,9 @@ public interface ApiService {
     Call<DriverLocation> getDriverLocation(@Path("driverId") long driverId);
     @PUT("/api/orders/{orderId}/cancel-by-driver")
     Call<Order> cancelOrderByDriver(@Path("orderId") long orderId, @Body Map<String, Long> body);
+    @PUT("/api/drivers/status")
+    Call<Void> updateDriverStatus(@Body Map<String, Object> body);
+    @GET("/api/drivers/{driverId}/status")
+    Call<Map<String, Object>> getDriverStatus(@Path("driverId") long driverId);
+
 }

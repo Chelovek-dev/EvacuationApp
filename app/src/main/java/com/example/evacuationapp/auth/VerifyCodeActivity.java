@@ -22,9 +22,10 @@ public class VerifyCodeActivity extends AppCompatActivity {
 
     private EditText etCode;
     private Button btnVerify;
-    private TextView tvPhone;
+    private TextView tvMessage;
     private String phoneNumber;
     private String userName;
+    private String userEmail;
     private String existingRole;
 
     @Override
@@ -34,13 +35,19 @@ public class VerifyCodeActivity extends AppCompatActivity {
 
         etCode = findViewById(R.id.etCode);
         btnVerify = findViewById(R.id.btnVerify);
-        tvPhone = findViewById(R.id.tvPhone);
+        tvMessage = findViewById(R.id.tvMessage);
 
         phoneNumber = getIntent().getStringExtra("phone");
         userName = getIntent().getStringExtra("name");
+        userEmail = getIntent().getStringExtra("email");
         existingRole = getIntent().getStringExtra("role");
 
-        tvPhone.setText("Код отправлен на +7" + phoneNumber);
+        // Отображаем, куда отправлен код
+        if (userEmail != null && !userEmail.isEmpty()) {
+            tvMessage.setText("Код отправлен на " + userEmail);
+        } else {
+            tvMessage.setText("Код отправлен на вашу почту");
+        }
 
         btnVerify.setOnClickListener(v -> verifyCode());
     }
@@ -66,13 +73,13 @@ public class VerifyCodeActivity extends AppCompatActivity {
                         Intent intent = new Intent(VerifyCodeActivity.this, RoleSelectionActivity.class);
                         intent.putExtra("phone", phoneNumber);
                         intent.putExtra("name", userName);
+                        intent.putExtra("email", userEmail);
                         startActivity(intent);
                         finish();
                     } else if (existingRole != null) {
                         // Существующий пользователь → вход
                         loginWithRole(phoneNumber, existingRole);
                     } else {
-                        // Если роль не передана, запрашиваем с сервера
                         checkUserAndLogin();
                     }
                 } else {

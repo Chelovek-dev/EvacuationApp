@@ -25,6 +25,7 @@ public class AvailableOrdersActivity extends AppCompatActivity {
     private Button btnBack;
     private ArrayAdapter<String> adapter;
     private List<Order> ordersList;
+    private long driverId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,18 +34,23 @@ public class AvailableOrdersActivity extends AppCompatActivity {
 
         lvOrders = findViewById(R.id.lvOrders);
         btnBack = findViewById(R.id.btnBack);
+        driverId = new PreferenceManager(this).getUserId();
 
         btnBack.setOnClickListener(v -> finish());
 
         loadAvailableOrders();
 
         lvOrders.setOnItemClickListener((parent, view, position, id) -> {
-            Order selected = ordersList.get(position);
-            acceptOrder(selected.getOrderId());
+            if (ordersList != null && position < ordersList.size()) {
+                Order selected = ordersList.get(position);
+                acceptOrder(selected.getOrderId());
+            }
         });
     }
 
     private void loadAvailableOrders() {
+        Toast.makeText(this, "Загрузка заказов...", Toast.LENGTH_SHORT).show();
+
         Call<List<Order>> call = RetrofitClient.getApiService().getAvailableOrders();
         call.enqueue(new Callback<List<Order>>() {
             @Override
@@ -58,27 +64,32 @@ public class AvailableOrdersActivity extends AppCompatActivity {
                         String[] titles = new String[ordersList.size()];
                         for (int i = 0; i < ordersList.size(); i++) {
                             Order o = ordersList.get(i);
-                            titles[i] = "Заказ #" + o.getOrderId() + " | " + o.getPickupAddress() + " → " + o.getDropoffAddress();
+                            titles[i] = "Заказ #" + o.getOrderId() + " | " + o.getPickupAddress() + " → " + o.getDropoffAddress() + " | " + (int)o.getPrice() + " ₽";
                         }
                         adapter = new ArrayAdapter<>(AvailableOrdersActivity.this, android.R.layout.simple_list_item_1, titles);
                         lvOrders.setAdapter(adapter);
                     }
                 } else {
-                    Toast.makeText(AvailableOrdersActivity.this, "Ошибка загрузки заказов", Toast.LENGTH_SHORT).show();
+                    String errorMsg = "Ошибка загрузки заказов";
+                    try {
+                        if (response.errorBody() != null) {
+                            errorMsg = response.errorBody().string();
+                        }
+                    } catch (Exception e) {}
+                    Toast.makeText(AvailableOrdersActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
                     finish();
                 }
             }
 
             @Override
             public void onFailure(Call<List<Order>> call, Throwable t) {
-                Toast.makeText(AvailableOrdersActivity.this, "Нет связи с сервером", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AvailableOrdersActivity.this, "Нет связи с сервером: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 finish();
             }
         });
     }
 
     private void acceptOrder(long orderId) {
-        long driverId = new PreferenceManager(this).getUserId();
         Map<String, Long> body = new HashMap<>();
         body.put("driverId", driverId);
 
@@ -95,13 +106,19 @@ public class AvailableOrdersActivity extends AppCompatActivity {
                     startActivity(intent);
                     finish();
                 } else {
-                    Toast.makeText(AvailableOrdersActivity.this, "Не удалось принять заказ", Toast.LENGTH_SHORT).show();
+                    String errorMsg = "Не удалось принять заказ";
+                    try {
+                        if (response.errorBody() != null) {
+                            errorMsg = response.errorBody().string();
+                        }
+                    } catch (Exception e) {}
+                    Toast.makeText(AvailableOrdersActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<Order> call, Throwable t) {
-                Toast.makeText(AvailableOrdersActivity.this, "Ошибка сети", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AvailableOrdersActivity.this, "Ошибка сети: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

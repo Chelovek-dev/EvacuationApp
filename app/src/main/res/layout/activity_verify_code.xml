@@ -36,9 +36,10 @@
             android:layout_marginTop="16dp" />
 
         <TextView
-            android:id="@+id/tvPhone"
+            android:id="@+id/tvMessage"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:text="Код подтверждения отправлен на вашу почту"
             android:textSize="14sp"
             android:textColor="#757575"
             android:gravity="center"
@@ -51,8 +52,8 @@
             android:id="@+id/codeLayout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:hint="Код из SMS"
-            app:layout_constraintTop_toBottomOf="@id/tvPhone"
+            android:hint="Код из письма"
+            app:layout_constraintTop_toBottomOf="@id/tvMessage"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="32dp"
