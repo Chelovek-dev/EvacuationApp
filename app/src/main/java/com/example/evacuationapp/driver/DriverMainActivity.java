@@ -192,7 +192,18 @@ public class DriverMainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        if (switchOnline.isChecked()) {
+            Map<String, Object> body = new HashMap<>();
+            body.put("driverId", userId);
+            body.put("isOnline", false);
+            RetrofitClient.getApiService().updateDriverStatus(body).enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {}
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {}
+            });
+        }
         stopSendingLocation();
+        super.onDestroy();
     }
 }
