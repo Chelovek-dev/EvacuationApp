@@ -7,20 +7,20 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.evacuationapp.R;
+import com.example.evacuationapp.auth.LoginActivity;  // ← добавить импорт
 import com.example.evacuationapp.utils.PreferenceManager;
 
 public class ClientMainActivity extends AppCompatActivity {
 
     private TextView tvWelcome;
     private Button btnCreateOrder, btnHistory, btnLogout;
-    private long userId; // теперь long
+    private long userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_client_main);
 
-        // Получаем userId из Intent (если передали) или из SharedPreferences
         userId = getIntent().getLongExtra("userId", 0);
         if (userId == 0) {
             userId = new PreferenceManager(this).getUserId();
@@ -38,30 +38,25 @@ public class ClientMainActivity extends AppCompatActivity {
             tvWelcome.setText("Добро пожаловать, клиент!");
         }
 
-        btnCreateOrder.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ClientMainActivity.this, CreateOrderActivity.class);
-                intent.putExtra("clientId", userId); // передаём long
-                startActivity(intent);
-            }
+        btnCreateOrder.setOnClickListener(v -> {
+            Intent intent = new Intent(ClientMainActivity.this, CreateOrderActivity.class);
+            intent.putExtra("clientId", userId);
+            startActivity(intent);
         });
 
-        btnHistory.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ClientMainActivity.this, HistoryActivity.class);
-                startActivity(intent);
-            }
+        btnHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(ClientMainActivity.this, HistoryActivity.class);
+            startActivity(intent);
         });
 
-        btnLogout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Очищаем данные и возвращаемся на экран входа
-                new PreferenceManager(ClientMainActivity.this).clear();
-                finish();
-            }
+        btnLogout.setOnClickListener(v -> {
+            PreferenceManager prefManager = new PreferenceManager(ClientMainActivity.this);
+            prefManager.clear();
+
+            Intent intent = new Intent(ClientMainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         });
     }
 }

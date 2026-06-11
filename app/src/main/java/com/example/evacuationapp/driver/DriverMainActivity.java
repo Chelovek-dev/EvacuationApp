@@ -10,6 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.evacuationapp.R;
+import com.example.evacuationapp.auth.LoginActivity;
 import com.example.evacuationapp.models.DriverLocation;
 import com.example.evacuationapp.network.RetrofitClient;
 import com.example.evacuationapp.utils.LocationTracker;
@@ -80,7 +81,13 @@ public class DriverMainActivity extends AppCompatActivity {
             if (switchOnline.isChecked()) {
                 updateDriverOnlineStatus(false);
             }
-            new PreferenceManager(DriverMainActivity.this).clear();
+
+            PreferenceManager prefManager = new PreferenceManager(DriverMainActivity.this);
+            prefManager.clear();
+
+            Intent intent = new Intent(DriverMainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
             finish();
         });
     }

@@ -7,7 +7,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.evacuationapp.R;
 import com.example.evacuationapp.network.RetrofitClient;
@@ -60,10 +59,10 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     boolean exists = (boolean) response.body().get("exists");
                     if (exists) {
-                        // Пользователь есть → отправляем код на email
-                        sendCode(phone, null, null);
+                        String role = (String) response.body().get("role");
+                        // Для существующего пользователя email не передаём — сервер сам найдёт в БД
+                        sendCode(phone, null, null, role);
                     } else {
-                        // Нет пользователя → идём на регистрацию
                         Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
                         intent.putExtra("phone", phone);
                         startActivity(intent);
@@ -82,11 +81,12 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void sendCode(String phone, String name, String email) {
+    private void sendCode(String phone, String name, String email, String role) {
         Map<String, String> body = new HashMap<>();
         body.put("phone", phone);
         if (name != null) body.put("name", name);
         if (email != null) body.put("email", email);
+        if (role != null) body.put("role", role);
 
         Call<Map<String, Object>> call = RetrofitClient.getApiService().sendCode(body);
         call.enqueue(new Callback<Map<String, Object>>() {
@@ -95,9 +95,15 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     Intent intent = new Intent(LoginActivity.this, VerifyCodeActivity.class);
                     intent.putExtra("phone", phone);
+                    intent.putExtra("role", role);
                     startActivity(intent);
                 } else {
-                    showError("Ошибка отправки кода");
+                    try {
+                        String errorBody = response.errorBody().string();
+                        showError("Ошибка: " + errorBody);
+                    } catch (Exception e) {
+                        showError("Ошибка отправки кода");
+                    }
                 }
             }
 

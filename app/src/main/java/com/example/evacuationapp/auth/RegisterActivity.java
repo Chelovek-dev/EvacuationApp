@@ -7,10 +7,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.evacuationapp.R;
 import com.example.evacuationapp.network.RetrofitClient;
+import com.example.evacuationapp.utils.PreferenceManager;  // ← добавить импорт
 import java.util.HashMap;
 import java.util.Map;
 import retrofit2.Call;
@@ -38,7 +38,7 @@ public class RegisterActivity extends AppCompatActivity {
         String phoneFromIntent = getIntent().getStringExtra("phone");
         if (phoneFromIntent != null && !phoneFromIntent.isEmpty()) {
             etPhone.setText(phoneFromIntent);
-            etPhone.setEnabled(false); // номер уже введён, не даём менять
+            etPhone.setEnabled(false);
         }
 
         btnRegister.setOnClickListener(v -> {
@@ -67,39 +67,58 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
-            sendCode(phone, name, email);
+            registerUser(phone, name, email);
         });
     }
 
-    private void sendCode(String phone, String name, String email) {
+    private void registerUser(String phone, String name, String email) {
+        btnRegister.setEnabled(false);
+        btnRegister.setText("Регистрация...");
+
+        // Сначала отправляем код
         Map<String, String> body = new HashMap<>();
         body.put("phone", phone);
         body.put("name", name);
         body.put("email", email);
-        body.put("role", "client"); // при регистрации пока роль client, потом можно выбрать
+        body.put("role", "client");
 
         Call<Map<String, Object>> call = RetrofitClient.getApiService().sendCode(body);
         call.enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                btnRegister.setEnabled(true);
+                btnRegister.setText("Зарегистрироваться");
+
                 if (response.isSuccessful()) {
+                    // Код отправлен, переходим на экран подтверждения
                     Intent intent = new Intent(RegisterActivity.this, VerifyCodeActivity.class);
                     intent.putExtra("phone", phone);
                     intent.putExtra("name", name);
                     intent.putExtra("email", email);
                     startActivity(intent);
+                    finish();
                 } else {
-                    showError("Ошибка отправки кода");
+                    try {
+                        String errorBody = response.errorBody().string();
+                        if (errorBody.contains("email уже существует")) {
+                            showError("Пользователь с таким email уже зарегистрирован");
+                        } else {
+                            showError("Ошибка: " + errorBody);
+                        }
+                    } catch (Exception e) {
+                        showError("Ошибка отправки кода");
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                btnRegister.setEnabled(true);
+                btnRegister.setText("Зарегистрироваться");
                 showError("Нет связи с сервером");
             }
         });
     }
-
     private void showError(String message) {
         tvError.setText(message);
         tvError.setVisibility(View.VISIBLE);

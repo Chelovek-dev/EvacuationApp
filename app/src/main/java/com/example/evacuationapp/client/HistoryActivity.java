@@ -1,11 +1,11 @@
 package com.example.evacuationapp.client;
 
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.evacuationapp.R;
 import com.example.evacuationapp.models.Order;
 import com.example.evacuationapp.network.RetrofitClient;
@@ -18,9 +18,10 @@ import retrofit2.Response;
 
 public class HistoryActivity extends AppCompatActivity {
 
-    private ListView lvOrders;
-    private ArrayAdapter<String> adapter;
-    private List<String> orderStrings = new ArrayList<>();
+    private RecyclerView rvOrders;
+    private Button btnBack;
+    private ClientHistoryAdapter adapter;
+    private List<Order> ordersList = new ArrayList<>();
     private long clientId;
 
     @Override
@@ -28,39 +29,34 @@ public class HistoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        lvOrders = findViewById(R.id.lvOrders);
+        rvOrders = findViewById(R.id.rvOrders);
+        btnBack = findViewById(R.id.btnBack);
         clientId = new PreferenceManager(this).getUserId();
 
-        // Показываем индикатор загрузки (можно добавить ProgressBar)
-        Toast.makeText(this, "Загрузка истории...", Toast.LENGTH_SHORT).show();
+        rvOrders.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new ClientHistoryAdapter(ordersList);
+        rvOrders.setAdapter(adapter);
 
-        loadOrders();
-        Button btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
+
+        loadClientHistory();
     }
 
-    private void loadOrders() {
+    private void loadClientHistory() {
+        Toast.makeText(this, "Загрузка истории...", Toast.LENGTH_SHORT).show();
+
         Call<List<Order>> call = RetrofitClient.getApiService().getClientOrders(clientId);
         call.enqueue(new Callback<List<Order>>() {
             @Override
             public void onResponse(Call<List<Order>> call, Response<List<Order>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<Order> orders = response.body();
-                    if (orders.isEmpty()) {
-                        orderStrings.add("У вас пока нет заказов");
-                    } else {
-                        for (Order order : orders) {
-                            // Формируем строку для отображения
-                            String date = order.getCreatedAt() != null ? order.getCreatedAt().substring(0, 10) : "дата не указана";
-                            String statusText = order.getStatusText();
-                            String line = "Заказ №" + order.getOrderId() + " | " + date + " | " + statusText + "\n" +
-                                    order.getPickupAddress() + " → " + order.getDropoffAddress() + "\n" +
-                                    "Стоимость: " + (int) order.getPrice() + " ₽";
-                            orderStrings.add(line);
-                        }
+                    ordersList.clear();
+                    ordersList.addAll(response.body());
+                    adapter.updateOrders(ordersList);
+
+                    if (ordersList.isEmpty()) {
+                        Toast.makeText(HistoryActivity.this, "У вас пока нет заказов", Toast.LENGTH_SHORT).show();
                     }
-                    adapter = new ArrayAdapter<>(HistoryActivity.this, android.R.layout.simple_list_item_1, orderStrings);
-                    lvOrders.setAdapter(adapter);
                 } else {
                     Toast.makeText(HistoryActivity.this, "Ошибка загрузки истории", Toast.LENGTH_SHORT).show();
                 }
