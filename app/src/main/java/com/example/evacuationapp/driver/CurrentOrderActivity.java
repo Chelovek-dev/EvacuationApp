@@ -168,6 +168,7 @@ public class CurrentOrderActivity extends AppCompatActivity {
 
         mapView.getOverlays().clear();
 
+        // Маркер места подачи (клиент)
         GeoPoint pickupPoint = getPointFromAddress(currentOrder.getPickupAddress());
         if (pickupPoint != null) {
             Marker pickupMarker = new Marker(mapView);
@@ -179,9 +180,20 @@ public class CurrentOrderActivity extends AppCompatActivity {
             mapView.getController().setCenter(pickupPoint);
             mapView.getController().setZoom(14.0);
         } else {
-            GeoPoint defaultPoint = new GeoPoint(58.0105, 56.2502); // Пермь
-            mapView.getController().setCenter(defaultPoint);
-            Toast.makeText(this, "Не удалось определить координаты места подачи", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Не удалось определить координаты места подачи: " + currentOrder.getPickupAddress(), Toast.LENGTH_LONG).show();
+        }
+
+        // Маркер места назначения (куда везти)
+        GeoPoint dropoffPoint = getPointFromAddress(currentOrder.getDropoffAddress());
+        if (dropoffPoint != null) {
+            Marker dropoffMarker = new Marker(mapView);
+            dropoffMarker.setIcon(getResources().getDrawable(android.R.drawable.ic_menu_directions));
+            dropoffMarker.setTitle("🏁 Место назначения");
+            dropoffMarker.setSnippet(currentOrder.getDropoffAddress());
+            dropoffMarker.setPosition(dropoffPoint);
+            mapView.getOverlays().add(dropoffMarker);
+        } else {
+            Toast.makeText(this, "Не удалось определить координаты места назначения: " + currentOrder.getDropoffAddress(), Toast.LENGTH_LONG).show();
         }
     }
 

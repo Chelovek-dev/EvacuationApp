@@ -10,7 +10,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.evacuationapp.R;
 import com.example.evacuationapp.network.RetrofitClient;
-import com.example.evacuationapp.utils.PreferenceManager;  // ← добавить импорт
 import java.util.HashMap;
 import java.util.Map;
 import retrofit2.Call;
@@ -34,7 +33,6 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btnRegister);
         tvError = findViewById(R.id.tvError);
 
-        // Получаем номер из Intent (передан с LoginActivity)
         String phoneFromIntent = getIntent().getStringExtra("phone");
         if (phoneFromIntent != null && !phoneFromIntent.isEmpty()) {
             etPhone.setText(phoneFromIntent);
@@ -73,9 +71,51 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void registerUser(String phone, String name, String email) {
         btnRegister.setEnabled(false);
-        btnRegister.setText("Регистрация...");
+        btnRegister.setText("Проверка...");
 
-        // Сначала отправляем код
+        Map<String, String> emailBody = new HashMap<>();
+        emailBody.put("email", email);
+
+        Call<Map<String, Object>> checkCall = RetrofitClient.getApiService().checkEmailExists(emailBody);
+        checkCall.enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    boolean exists = (boolean) response.body().get("exists");
+                    if (exists) {
+                        showError("Пользователь с таким email уже зарегистрирован");
+                        btnRegister.setEnabled(true);
+                        btnRegister.setText("Зарегистрироваться");
+                    } else {
+                        sendVerificationCode(phone, name, email);
+                    }
+                } else {
+                    // Обработка 404 и других ошибок
+                    if (response.code() == 404) {
+                        // Если эндпоинт не найден, пробуем зарегистрироваться без проверки
+                        // Сервер сам проверит уникальность email при регистрации
+                        sendVerificationCode(phone, name, email);
+                    } else {
+                        showError("Ошибка сервера. Попробуйте позже.");
+                        btnRegister.setEnabled(true);
+                        btnRegister.setText("Зарегистрироваться");
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                showError("Нет связи с сервером. Проверьте интернет.");
+                btnRegister.setEnabled(true);
+                btnRegister.setText("Зарегистрироваться");
+            }
+        });
+    }
+
+    private void sendVerificationCode(String phone, String name, String email) {
+        btnRegister.setEnabled(false);
+        btnRegister.setText("Отправка кода...");
+
         Map<String, String> body = new HashMap<>();
         body.put("phone", phone);
         body.put("name", name);
@@ -90,7 +130,6 @@ public class RegisterActivity extends AppCompatActivity {
                 btnRegister.setText("Зарегистрироваться");
 
                 if (response.isSuccessful()) {
-                    // Код отправлен, переходим на экран подтверждения
                     Intent intent = new Intent(RegisterActivity.this, VerifyCodeActivity.class);
                     intent.putExtra("phone", phone);
                     intent.putExtra("name", name);
@@ -100,13 +139,14 @@ public class RegisterActivity extends AppCompatActivity {
                 } else {
                     try {
                         String errorBody = response.errorBody().string();
+                        // Парсим ошибку с сервера
                         if (errorBody.contains("email уже существует")) {
                             showError("Пользователь с таким email уже зарегистрирован");
                         } else {
                             showError("Ошибка: " + errorBody);
                         }
                     } catch (Exception e) {
-                        showError("Ошибка отправки кода");
+                        showError("Ошибка отправки кода. Попробуйте позже.");
                     }
                 }
             }
@@ -115,10 +155,11 @@ public class RegisterActivity extends AppCompatActivity {
             public void onFailure(Call<Map<String, Object>> call, Throwable t) {
                 btnRegister.setEnabled(true);
                 btnRegister.setText("Зарегистрироваться");
-                showError("Нет связи с сервером");
+                showError("Нет связи с сервером. Проверьте интернет.");
             }
         });
     }
+
     private void showError(String message) {
         tvError.setText(message);
         tvError.setVisibility(View.VISIBLE);

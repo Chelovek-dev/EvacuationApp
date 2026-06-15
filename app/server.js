@@ -161,10 +161,11 @@ app.post('/api/auth/send-code', async (req, res) => {
     if (!phone) return res.status(400).json({ error: 'Телефон обязателен' });
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    let userEmail = email;
-    let userName = name;
+    let userEmail = email;  // Сначала берём email из запроса
+    let userName = name;     // Сначала берём name из запроса
 
-    if (!email) {
+    // Если email не передан в запросе, пробуем найти в БД
+    if (!userEmail) {
         const user = await pool.query('SELECT email, name FROM users WHERE phone = $1', [phone]);
         if (user.rows.length > 0) {
             userEmail = user.rows[0].email;
@@ -172,24 +173,33 @@ app.post('/api/auth/send-code', async (req, res) => {
         }
     }
 
+    // ПРОВЕРКА: если email всё ещё нет - ошибка
     if (!userEmail) {
-        return res.status(400).json({ error: 'У пользователя не указан email' });
+        console.error(`❌ Нет email для отправки кода пользователю ${phone}`);
+        return res.status(400).json({ error: 'Email не указан. Пожалуйста, укажите email для регистрации.' });
     }
 
-    codeStore.set(phone, { code, name: userName, role, phone, email: userEmail, expires: Date.now() + 5 * 60 * 1000 });
+    codeStore.set(phone, { 
+        code, 
+        name: userName, 
+        role, 
+        phone, 
+        email: userEmail, 
+        expires: Date.now() + 5 * 60 * 1000 
+    });
 
     try {
         await transporter.sendMail({
             from: '"Автоэвакуатор" <KekMem11@yandex.ru>',
             to: userEmail,
             subject: 'Код подтверждения — Автоэвакуатор',
-            text: `Здравствуйте, ${userName || 'пользователь'}!\n\nВаш код для входа: ${code}\nКод действителен 5 минут.`
+            text: `Здравствуйте, ${userName || 'пользователь'}!\n\nВаш код для входа: ${code}\nКод действителен 5 минут.\n\nЕсли вы не запрашивали код, просто проигнорируйте это письмо.`
         });
         console.log(`✅ Код для ${phone} отправлен на ${userEmail}: ${code}`);
-        return res.json({ success: true });  // ← важно: return
+        return res.json({ success: true });
     } catch (err) {
         console.error('❌ Ошибка отправки письма:', err.message);
-        return res.status(500).json({ error: 'Не удалось отправить код на почту' });
+        return res.status(500).json({ error: 'Не удалось отправить код на почту. Проверьте правильность email.' });
     }
 });
 
@@ -299,7 +309,23 @@ app.post('/api/auth/login', async (req, res) => {
         return res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
-
+// Проверка существования email (для регистрации)
+app.post('/api/auth/check-email', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email обязателен' });
+    
+    try {
+        const result = await pool.query('SELECT user_id FROM users WHERE email = $1', [email]);
+        if (result.rows.length > 0) {
+            return res.json({ exists: true });
+        } else {
+            return res.json({ exists: false });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка проверки email' });
+    }
+});
 // ==================== ЗАКАЗЫ ====================
 // 1. ДОСТУПНЫЕ ЗАКАЗЫ 
 app.get('/api/orders/available', async (req, res) => {
@@ -836,14 +862,16 @@ app.get('/admin/export/driver-stats', checkAdmin, async (req, res) => {
             ORDER BY orders_count DESC
         `);
         
-        let csv = "Водитель,Телефон,Кол-во заказов,Заработано\n";
+        let csv = "Водитель;Телефон;Кол-во заказов;Заработано\n";
+        
         driverStats.rows.forEach(d => {
-            csv += `"${d.name || 'Водитель'}","${d.phone || ''}",${d.orders_count || 0},${d.total_earned || 0}\n`;
+            const name = `"${(d.name || 'Водитель').replace(/"/g, '""')}"`;
+            csv += `${name};${d.phone || ''};${d.orders_count || 0};${d.total_earned || 0}\n`;
         });
         
-        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', 'attachment; filename=driver_stats.csv');
-        res.send(csv);
+        res.send('\uFEFF' + csv);
     } catch (err) {
         console.error(err);
         res.status(500).send('Ошибка экспорта');
@@ -854,13 +882,19 @@ app.get('/admin/export/driver-stats', checkAdmin, async (req, res) => {
 app.get('/admin/export/users', checkAdmin, async (req, res) => {
     try {
         const users = await pool.query('SELECT user_id, phone, role, name, email, registered_at FROM users');
-        let csv = "ID,Телефон,Роль,Имя,Email,Дата регистрации\n";
+        
+        // Заголовки с точкой с запятой
+        let csv = "ID;Телефон;Роль;Имя;Email;Дата регистрации\n";
+        
         users.rows.forEach(u => {
-            csv += `${u.user_id},"${u.phone}","${u.role}","${u.name || ''}","${u.email || ''}","${u.registered_at}"\n`;
+            const name = (u.name || '').replace(/"/g, '""');
+            const email = (u.email || '').replace(/"/g, '""');
+            csv += `${u.user_id};${u.phone};${u.role};${name};${email};${u.registered_at}\n`;
         });
-        res.setHeader('Content-Type', 'text/csv');
+        
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
-        res.send(csv);
+        res.send('\uFEFF' + csv);
     } catch (err) {
         console.error(err);
         res.status(500).send('Ошибка экспорта');
@@ -870,14 +904,29 @@ app.get('/admin/export/users', checkAdmin, async (req, res) => {
 // Экспорт заказов (CSV)
 app.get('/admin/export/orders', checkAdmin, async (req, res) => {
     try {
-        const orders = await pool.query('SELECT order_id, client_id, driver_id, status, pickup_address, dropoff_address, price, created_at, completed_at FROM orders ORDER BY created_at DESC');
-        let csv = "ID,Клиент,Водитель,Статус,Откуда,Куда,Цена,Создан,Завершён\n";
+        const orders = await pool.query(`
+            SELECT order_id, client_id, driver_id, status, pickup_address, dropoff_address, price, created_at, completed_at 
+            FROM orders 
+            ORDER BY created_at DESC
+        `);
+        
+        // Заголовки столбцов
+        let csv = "ID заказа;ID клиента;ID водителя;Статус;Адрес подачи;Адрес назначения;Цена;Дата создания;Дата завершения\n";
+        
+        // Данные
         orders.rows.forEach(o => {
-            csv += `${o.order_id},${o.client_id},${o.driver_id || ''},"${o.status}","${o.pickup_address}","${o.dropoff_address}",${o.price},"${o.created_at}","${o.completed_at || ''}"\n`;
+            // Экранируем кавычки и точки с запятой в адресах
+            const pickup = `"${(o.pickup_address || '').replace(/"/g, '""')}"`;
+            const dropoff = `"${(o.dropoff_address || '').replace(/"/g, '""')}"`;
+            
+            csv += `${o.order_id};${o.client_id};${o.driver_id || ''};${o.status};${pickup};${dropoff};${o.price};${o.created_at};${o.completed_at || ''}\n`;
         });
-        res.setHeader('Content-Type', 'text/csv');
+        
+        // Указываем кодировку для русских букв
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', 'attachment; filename=orders.csv');
-        res.send(csv);
+        // Добавляем BOM для поддержки UTF-8 в Excel
+        res.send('\uFEFF' + csv);
     } catch (err) {
         console.error(err);
         res.status(500).send('Ошибка экспорта');

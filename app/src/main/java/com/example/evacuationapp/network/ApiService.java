@@ -47,5 +47,6 @@ public interface ApiService {
     Call<Void> updateDriverStatus(@Body Map<String, Object> body);
     @GET("/api/drivers/{driverId}/status")
     Call<Map<String, Object>> getDriverStatus(@Path("driverId") long driverId);
-
+    @POST("/api/auth/check-email")
+    Call<Map<String, Object>> checkEmailExists(@Body Map<String, String> body);
 }
