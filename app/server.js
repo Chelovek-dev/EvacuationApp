@@ -963,6 +963,26 @@ app.put('/api/drivers/status', async (req, res) => {
         res.status(500).json({ error: 'Ошибка обновления статуса' });
     }
 });
+// Обновление профиля водителя (модель, госномер)
+app.put('/api/drivers/:driverId/profile', async (req, res) => {
+    const { driverId } = req.params;
+    const { carModel, carNumber } = req.body;
+    
+    if (!carModel || !carNumber) {
+        return res.status(400).json({ error: 'Модель и госномер обязательны' });
+    }
+    
+    try {
+        await pool.query(
+            'UPDATE drivers SET car_model = $1, car_number = $2 WHERE driver_id = $3',
+            [carModel, carNumber, driverId]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка обновления профиля' });
+    }
+});
 // ==================== ЗАПУСК ====================
 const PORT = 8080;
 app.listen(PORT, () => {

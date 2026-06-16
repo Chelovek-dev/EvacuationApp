@@ -19,7 +19,13 @@ public class PreferenceManager {
         prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         gson = new Gson();
     }
+    public void setDriverProfileFilled(boolean filled) {
+        prefs.edit().putBoolean("driver_profile_filled", filled).apply();
+    }
 
+    public boolean isDriverProfileFilled() {
+        return prefs.getBoolean("driver_profile_filled", false);
+    }
     public void saveToken(String token) {
         prefs.edit().putString(KEY_TOKEN, token).apply();
     }

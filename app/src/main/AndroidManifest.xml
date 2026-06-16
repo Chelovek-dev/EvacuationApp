@@ -36,6 +36,8 @@
         <activity android:name=".client.SelectLocationActivity" />
         <activity android:name=".auth.VerifyCodeActivity" />
         <activity android:name=".auth.RegisterActivity" />
+        <activity android:name=".driver.DriverProfileActivity" />
+
 
     </application>
 

@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.evacuationapp.R;
 import com.example.evacuationapp.client.ClientMainActivity;
 import com.example.evacuationapp.driver.DriverMainActivity;
+import com.example.evacuationapp.driver.DriverProfileActivity;
 import com.example.evacuationapp.network.RetrofitClient;
 import com.example.evacuationapp.utils.PreferenceManager;
 import java.util.HashMap;
@@ -47,7 +48,7 @@ public class RoleSelectionActivity extends AppCompatActivity {
         body.put("phone", phone);
         body.put("role", role);
         body.put("name", userName != null ? userName : "");
-        body.put("email", userEmail != null ? userEmail : "");  // в†ђ РґРѕР±Р°РІРёС‚СЊ email
+        body.put("email", userEmail != null ? userEmail : "");
 
         Call<Map<String, Object>> call = RetrofitClient.getApiService().login(body);
         call.enqueue(new Callback<Map<String, Object>>() {
@@ -66,27 +67,39 @@ public class RoleSelectionActivity extends AppCompatActivity {
                     prefManager.saveUserRole(userRole);
 
                     Intent intent;
+
                     if ("client".equals(userRole)) {
                         intent = new Intent(RoleSelectionActivity.this, ClientMainActivity.class);
+                        intent.putExtra("userId", userId);
                     } else {
-                        intent = new Intent(RoleSelectionActivity.this, DriverMainActivity.class);
+                        // Для водителя проверяем, заполнен ли профиль
+                        boolean isProfileFilled = prefManager.isDriverProfileFilled();
+                        if (!isProfileFilled) {
+                            // Первый вход - заполняем профиль
+                            intent = new Intent(RoleSelectionActivity.this, DriverProfileActivity.class);
+                            intent.putExtra("userId", userId);
+                        } else {
+                            // Профиль уже заполнен - переходим в главный экран
+                            intent = new Intent(RoleSelectionActivity.this, DriverMainActivity.class);
+                            intent.putExtra("userId", userId);
+                        }
                     }
-                    intent.putExtra("userId", userId);
+
                     startActivity(intent);
                     finish();
                 } else {
                     try {
                         String errorBody = response.errorBody().string();
-                        Toast.makeText(RoleSelectionActivity.this, "РћС€РёР±РєР°: " + errorBody, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RoleSelectionActivity.this, "Ошибка: " + errorBody, Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {
-                        Toast.makeText(RoleSelectionActivity.this, "РћС€РёР±РєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RoleSelectionActivity.this, "Ошибка авторизации", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
 
             @Override
             public void onFailure(Call<Map<String, Object>> call, Throwable t) {
-                Toast.makeText(RoleSelectionActivity.this, "РќРµС‚ СЃРІСЏР·Рё СЃ СЃРµСЂРІРµСЂРѕРј", Toast.LENGTH_SHORT).show();
+                Toast.makeText(RoleSelectionActivity.this, "Нет связи с сервером", Toast.LENGTH_SHORT).show();
             }
         });
     }
