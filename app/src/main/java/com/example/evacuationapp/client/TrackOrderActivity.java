@@ -31,7 +31,7 @@ import retrofit2.Response;
 public class TrackOrderActivity extends AppCompatActivity {
 
     private TextView tvOrderId, tvStatus, tvPickup, tvDropoff, tvPrice;
-    private Button btnCancelOrder, btnBack;
+    private Button btnCancelOrder;
     private MapView mapView;
     private Marker driverMarker;
     private long orderId;
@@ -72,7 +72,6 @@ public class TrackOrderActivity extends AppCompatActivity {
         tvDropoff = findViewById(R.id.tvDropoffAddress);
         tvPrice = findViewById(R.id.tvPrice);
         btnCancelOrder = findViewById(R.id.btnCancelOrder);
-        btnBack = findViewById(R.id.btnBack);
         mapView = findViewById(R.id.mapView);
 
         // Настройка карты
@@ -84,7 +83,6 @@ public class TrackOrderActivity extends AppCompatActivity {
         }
 
         btnCancelOrder.setOnClickListener(v -> cancelOrder());
-        btnBack.setOnClickListener(v -> finish());
 
         loadOrder();
         startPolling();

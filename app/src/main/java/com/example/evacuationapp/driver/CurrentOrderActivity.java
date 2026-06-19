@@ -38,7 +38,7 @@ public class CurrentOrderActivity extends AppCompatActivity {
 
     private TextView tvOrderId, tvPickup, tvDropoff, tvPrice, tvStatus;
     private TextView tvClientPhone, tvContactPhone, tvComment;
-    private Button btnStart, btnComplete, btnCancelByDriver, btnBack;
+    private Button btnStart, btnComplete, btnCancelByDriver;
     private MapView mapView;
     private Marker clientMarker;
     private Order currentOrder;
@@ -70,7 +70,6 @@ public class CurrentOrderActivity extends AppCompatActivity {
         btnStart = findViewById(R.id.btnStart);
         btnComplete = findViewById(R.id.btnComplete);
         btnCancelByDriver = findViewById(R.id.btnCancelByDriver);
-        btnBack = findViewById(R.id.btnBack);
         mapView = findViewById(R.id.mapView);
 
         driverId = new PreferenceManager(this).getUserId();
@@ -97,7 +96,6 @@ public class CurrentOrderActivity extends AppCompatActivity {
         btnStart.setOnClickListener(v -> updateStatus("in_progress"));
         btnComplete.setOnClickListener(v -> updateStatus("completed"));
         btnCancelByDriver.setOnClickListener(v -> cancelOrderByDriver());
-        btnBack.setOnClickListener(v -> finish());
 
         startSendingLocation();
     }
